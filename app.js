@@ -16,6 +16,12 @@ const validationBanner = document.getElementById("validationBanner");
 const faceletBox = document.getElementById("faceletBox");
 const selectedPaintLabel = document.getElementById("selectedPaintLabel");
 
+const cameraVideo = document.getElementById("cameraVideo");
+const captureCanvas = document.getElementById("captureCanvas");
+const cameraStatus = document.getElementById("cameraStatus");
+const cameraDebugBox = document.getElementById("cameraDebugBox");
+const cameraResultGrid = document.getElementById("cameraResultGrid");
+
 const scrambleBtn = document.getElementById("scrambleBtn");
 const solveBtn = document.getElementById("solveBtn");
 const resetBtn = document.getElementById("resetBtn");
@@ -24,9 +30,15 @@ const validateBtn = document.getElementById("validateBtn");
 const fillSolvedBtn = document.getElementById("fillSolvedBtn");
 const clearInputBtn = document.getElementById("clearInputBtn");
 const jumpToSolverBtn = document.getElementById("jumpToSolverBtn");
-const jumpToInputBtn = document.getElementById("jumpToInputBtn");
+const jumpToCameraBtn = document.getElementById("jumpToCameraBtn");
+
+const openCameraBtn = document.getElementById("openCameraBtn");
+const captureFaceBtn = document.getElementById("captureFaceBtn");
+const closeCameraBtn = document.getElementById("closeCameraBtn");
+const applyScanBtn = document.getElementById("applyScanBtn");
 
 const colorPickButtons = Array.from(document.querySelectorAll(".color-pick"));
+const targetFaceButtons = Array.from(document.querySelectorAll(".target-face-btn"));
 
 const FACE_ORDER = ["U", "R", "F", "D", "L", "B"];
 const NET_FACES = ["U", "L", "F", "R", "B", "D"];
@@ -49,11 +61,23 @@ const COLOR_LABELS = {
   X: "Empty (X)"
 };
 
+const COLOR_RGB = {
+  U: [245, 247, 250],
+  R: [255, 90, 90],
+  F: [68, 210, 124],
+  D: [255, 216, 77],
+  L: [255, 154, 60],
+  B: [76, 162, 255]
+};
+
 let selectedColor = "U";
+let targetFace = "U";
 let currentScramble = "";
 let currentSolution = "";
 let solverInitialized = false;
 let currentCube = null;
+let cameraStream = null;
+let lastScanColors = Array(9).fill("X");
 
 const faceState = {
   U: Array(9).fill("X"),
@@ -87,15 +111,12 @@ function scrollToSection(id) {
 
 function setBanner(kind, message) {
   validationBanner.className = "validation-banner";
-  if (kind === "success") {
-    validationBanner.classList.add("validation-success");
-  } else if (kind === "warning") {
-    validationBanner.classList.add("validation-warning");
-  } else if (kind === "danger") {
-    validationBanner.classList.add("validation-danger");
-  } else {
-    validationBanner.classList.add("validation-neutral");
-  }
+  validationBanner.classList.add(
+    kind === "success" ? "validation-success" :
+    kind === "warning" ? "validation-warning" :
+    kind === "danger" ? "validation-danger" :
+    "validation-neutral"
+  );
   validationBanner.textContent = message;
 }
 
@@ -142,13 +163,8 @@ function resetAll() {
 }
 
 async function ensureSolverReady() {
-  if (!Cube) {
-    throw new Error("cube.js library did not load.");
-  }
-
-  if (solverInitialized) {
-    return;
-  }
+  if (!Cube) throw new Error("cube.js library did not load.");
+  if (solverInitialized) return;
 
   solverStatus.textContent = "Initializing...";
   setStatus("Initializing solver tables. This may take a few seconds on first use...");
@@ -167,7 +183,6 @@ async function ensureSolverReady() {
 
 async function generateScramble() {
   scrollToSection("solver");
-
   try {
     setStatus("Generating random 3×3 scramble...");
     const scramble = await randomScrambleForEvent("333");
@@ -191,7 +206,6 @@ async function generateScramble() {
 
 async function solveCurrentScramble() {
   scrollToSection("solver");
-
   if (!currentCube || !currentScramble) {
     setStatus("Generate a scramble first.");
     return;
@@ -262,29 +276,17 @@ function getColorCounts() {
 
 function updateCountsUI() {
   const counts = getColorCounts();
-  const map = {
-    U: document.querySelector(".count-u"),
-    R: document.querySelector(".count-r"),
-    F: document.querySelector(".count-f"),
-    D: document.querySelector(".count-d"),
-    L: document.querySelector(".count-l"),
-    B: document.querySelector(".count-b"),
-    X: document.querySelector(".count-x")
-  };
-
-  map.U.textContent = `U: ${counts.U} / 9`;
-  map.R.textContent = `R: ${counts.R} / 9`;
-  map.F.textContent = `F: ${counts.F} / 9`;
-  map.D.textContent = `D: ${counts.D} / 9`;
-  map.L.textContent = `L: ${counts.L} / 9`;
-  map.B.textContent = `B: ${counts.B} / 9`;
-  map.X.textContent = `X: ${counts.X}`;
+  document.querySelector(".count-u").textContent = `U: ${counts.U} / 9`;
+  document.querySelector(".count-r").textContent = `R: ${counts.R} / 9`;
+  document.querySelector(".count-f").textContent = `F: ${counts.F} / 9`;
+  document.querySelector(".count-d").textContent = `D: ${counts.D} / 9`;
+  document.querySelector(".count-l").textContent = `L: ${counts.L} / 9`;
+  document.querySelector(".count-b").textContent = `B: ${counts.B} / 9`;
+  document.querySelector(".count-x").textContent = `X: ${counts.X}`;
 }
 
 function renderAllFaces() {
-  for (const face of NET_FACES) {
-    renderFace(face);
-  }
+  for (const face of NET_FACES) renderFace(face);
   faceletBox.textContent = getFaceletString();
   updateCountsUI();
 }
@@ -292,7 +294,6 @@ function renderAllFaces() {
 function buildFaceGrid(face) {
   const container = document.getElementById(`face-${face}`);
   if (!container) return;
-
   container.innerHTML = "";
 
   for (let i = 0; i < 9; i++) {
@@ -301,20 +302,16 @@ function buildFaceGrid(face) {
     sticker.className = "sticker";
     sticker.dataset.face = face;
     sticker.dataset.index = String(i);
-
     if (i === 4) {
       sticker.classList.add("center-locked");
       sticker.setAttribute("aria-disabled", "true");
     }
-
     container.appendChild(sticker);
   }
 }
 
 function createFaceGrids() {
-  for (const face of NET_FACES) {
-    buildFaceGrid(face);
-  }
+  for (const face of NET_FACES) buildFaceGrid(face);
   renderAllFaces();
 }
 
@@ -324,20 +321,17 @@ function liveInputHealth() {
     setBanner("warning", `Input incomplete: ${counts.X} sticker(s) still empty.`);
     return;
   }
-
   for (const color of FACE_ORDER) {
     if (counts[color] !== 9) {
       setBanner("danger", `Color counts are off: ${color} has ${counts[color]} sticker(s).`);
       return;
     }
   }
-
   setBanner("success", "Color counts look complete. Run Validate for full checking.");
 }
 
 function handleStickerClick(face, index, colorToApply = selectedColor) {
   if (index === 4) return;
-
   faceState[face][index] = colorToApply;
   renderFace(face);
   faceletBox.textContent = getFaceletString();
@@ -355,10 +349,8 @@ function wireFaceGridClicks() {
     container.addEventListener("click", (event) => {
       const target = event.target.closest(".sticker");
       if (!target) return;
-
       const clickedFace = target.dataset.face;
       const clickedIndex = Number(target.dataset.index);
-
       if (!clickedFace || Number.isNaN(clickedIndex)) return;
       handleStickerClick(clickedFace, clickedIndex, selectedColor);
     });
@@ -366,12 +358,9 @@ function wireFaceGridClicks() {
     container.addEventListener("contextmenu", (event) => {
       const target = event.target.closest(".sticker");
       if (!target) return;
-
       event.preventDefault();
-
       const clickedFace = target.dataset.face;
       const clickedIndex = Number(target.dataset.index);
-
       if (!clickedFace || Number.isNaN(clickedIndex) || clickedIndex === 4) return;
       handleStickerClick(clickedFace, clickedIndex, "X");
     });
@@ -384,7 +373,6 @@ function clearNonCenters() {
       faceState[face][i] = i === 4 ? CENTER_COLORS[face] : "X";
     }
   }
-
   renderAllFaces();
   validationBox.textContent = "Cleared all non-center stickers.";
   inputStatus.textContent = "Cleared";
@@ -397,7 +385,6 @@ function fillSolved() {
       faceState[face][i] = CENTER_COLORS[face];
     }
   }
-
   renderAllFaces();
   validationBox.textContent = "Filled with solved cube colors.";
   inputStatus.textContent = "Solved template loaded";
@@ -426,33 +413,22 @@ function validateFaceCounts() {
     }
   }
 
-  if (counts.X > 0) {
-    issues.push(`There are ${counts.X} unfilled stickers.`);
-  }
-
+  if (counts.X > 0) issues.push(`There are ${counts.X} unfilled stickers.`);
   for (const color of FACE_ORDER) {
-    if (counts[color] !== 9) {
-      issues.push(`${color} has ${counts[color]} stickers instead of 9.`);
-    }
+    if (counts[color] !== 9) issues.push(`${color} has ${counts[color]} stickers instead of 9.`);
   }
 
-  return {
-    ok: issues.length === 0,
-    counts,
-    issues
-  };
+  return { ok: issues.length === 0, counts, issues };
 }
 
 async function validateManualInput() {
   const facelet = getFaceletString();
   faceletBox.textContent = facelet;
-
   const basic = validateFaceCounts();
 
   if (!basic.ok) {
     validationBox.textContent =
-      "Validation failed:\n" +
-      basic.issues.map((x) => `• ${x}`).join("\n");
+      "Validation failed:\n" + basic.issues.map((x) => `• ${x}`).join("\n");
     inputStatus.textContent = "Validation failed";
     setBanner("danger", "Validation failed. Fix the count or completeness issues.");
     return { ok: false, facelet };
@@ -464,7 +440,6 @@ async function validateManualInput() {
     setBanner("warning", "Checking solver validity...");
 
     await ensureSolverReady();
-
     const parsedCube = Cube.fromString(facelet);
     const testSolution = parsedCube.solve();
 
@@ -473,7 +448,7 @@ async function validateManualInput() {
       "• Counts are correct\n" +
       "• Centers are correct\n" +
       "• Solver accepted the facelet string\n" +
-      `• State appears solvable\n` +
+      "• State appears solvable\n" +
       `• Preview solution: ${testSolution || "(already solved)"}`;
 
     inputStatus.textContent = "Validation passed";
@@ -493,8 +468,8 @@ async function validateManualInput() {
 
 async function solveManualInput() {
   scrollToSection("solver");
-
   const restoreButton = setButtonBusy(solveInputBtn, "Solving...");
+
   try {
     const result = await validateManualInput();
     if (!result.ok) {
@@ -533,10 +508,213 @@ async function solveManualInput() {
   }
 }
 
-colorPickButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    setSelectedColor(btn.dataset.color);
+/* Camera */
+function setTargetFace(face) {
+  targetFace = face;
+  targetFaceButtons.forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.targetFace === face);
   });
+}
+
+function renderCameraResult(colors) {
+  const cells = cameraResultGrid.querySelectorAll(".camera-result-cell");
+  cells.forEach((cell, i) => {
+    const value = colors[i] || "X";
+    cell.className = "camera-result-cell";
+    cell.classList.add(`sticker-${value}`);
+    cell.textContent = value;
+    if (value === "U" || value === "D") {
+      cell.style.color = "#071016";
+    } else if (value === "X") {
+      cell.style.color = "#a8bbcd";
+    } else {
+      cell.style.color = "#071016";
+    }
+  });
+}
+
+function colorDistance(a, b) {
+  const dr = a[0] - b[0];
+  const dg = a[1] - b[1];
+  const db = a[2] - b[2];
+  return Math.sqrt(dr * dr + dg * dg + db * db);
+}
+
+function nearestCubeColor(rgb) {
+  let best = "U";
+  let bestDist = Number.POSITIVE_INFINITY;
+
+  for (const [code, ref] of Object.entries(COLOR_RGB)) {
+    const dist = colorDistance(rgb, ref);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = code;
+    }
+  }
+
+  return { code: best, distance: bestDist };
+}
+
+async function openCamera() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    cameraStatus.textContent = "Camera API not available in this browser.";
+    return;
+  }
+
+  try {
+    const restore = setButtonBusy(openCameraBtn, "Opening...");
+    cameraStatus.textContent = "Requesting camera permission...";
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    });
+
+    cameraStream = stream;
+    cameraVideo.srcObject = stream;
+
+    const track = stream.getVideoTracks()[0];
+    if (track?.applyConstraints) {
+      try {
+        await track.applyConstraints({
+          advanced: [{ focusMode: "continuous" }]
+        });
+      } catch {
+        // ignore unsupported focus constraint
+      }
+    }
+
+    cameraStatus.textContent = "Camera opened. Align one face inside the grid.";
+    cameraDebugBox.textContent = "Camera ready. Capture a face when the cube is aligned.";
+    restore();
+  } catch (error) {
+    console.error(error);
+    cameraStatus.textContent = "Could not open camera. Check permission and HTTPS.";
+    cameraDebugBox.textContent = String(error);
+  }
+}
+
+function closeCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach((track) => track.stop());
+    cameraStream = null;
+  }
+  cameraVideo.srcObject = null;
+  cameraStatus.textContent = "Camera is closed.";
+}
+
+function sampleGridColors(ctx, width, height) {
+  const results = [];
+  const gridSize = Math.min(width, height) * 0.52;
+  const startX = (width - gridSize) / 2;
+  const startY = (height - gridSize) / 2;
+  const cell = gridSize / 3;
+  const patch = cell * 0.28;
+
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+      const centerX = startX + (col + 0.5) * cell;
+      const centerY = startY + (row + 0.5) * cell;
+      const x = Math.max(0, Math.floor(centerX - patch / 2));
+      const y = Math.max(0, Math.floor(centerY - patch / 2));
+      const w = Math.max(1, Math.floor(patch));
+      const h = Math.max(1, Math.floor(patch));
+
+      const imageData = ctx.getImageData(x, y, w, h).data;
+
+      let r = 0, g = 0, b = 0, count = 0;
+      for (let i = 0; i < imageData.length; i += 4) {
+        r += imageData[i];
+        g += imageData[i + 1];
+        b += imageData[i + 2];
+        count++;
+      }
+
+      const avg = [
+        Math.round(r / count),
+        Math.round(g / count),
+        Math.round(b / count)
+      ];
+
+      const guess = nearestCubeColor(avg);
+      results.push({
+        rgb: avg,
+        code: guess.code,
+        distance: Math.round(guess.distance)
+      });
+    }
+  }
+
+  return results;
+}
+
+function forceCenterColor(colors, face) {
+  const out = [...colors];
+  out[4] = CENTER_COLORS[face];
+  return out;
+}
+
+function captureFace() {
+  if (!cameraStream || !cameraVideo.videoWidth || !cameraVideo.videoHeight) {
+    cameraStatus.textContent = "Camera is not ready yet.";
+    return;
+  }
+
+  const width = cameraVideo.videoWidth;
+  const height = cameraVideo.videoHeight;
+  captureCanvas.width = width;
+  captureCanvas.height = height;
+
+  const ctx = captureCanvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(cameraVideo, 0, 0, width, height);
+
+  const samples = sampleGridColors(ctx, width, height);
+  const guessed = forceCenterColor(samples.map((s) => s.code), targetFace);
+
+  lastScanColors = guessed;
+  renderCameraResult(guessed);
+
+  const lines = samples.map((s, i) => {
+    return `${i + 1}: rgb(${s.rgb.join(", ")}) -> ${guessed[i]} (distance ${s.distance})`;
+  });
+
+  cameraStatus.textContent = `Face captured for target ${targetFace}. Review and apply if it looks correct.`;
+  cameraDebugBox.textContent =
+    `Target face: ${targetFace}\n` +
+    `Guessed colors: ${guessed.join(" ")}\n\n` +
+    lines.join("\n");
+}
+
+function applyScanToFace() {
+  if (!lastScanColors || lastScanColors.length !== 9) {
+    cameraStatus.textContent = "No scan result available yet.";
+    return;
+  }
+
+  for (let i = 0; i < 9; i++) {
+    faceState[targetFace][i] = i === 4 ? CENTER_COLORS[targetFace] : lastScanColors[i];
+  }
+
+  renderFace(targetFace);
+  faceletBox.textContent = getFaceletString();
+  updateCountsUI();
+  inputStatus.textContent = `Applied scanned colors to face ${targetFace}`;
+  setBanner("warning", `Scan applied to face ${targetFace}. Review and correct any mistakes, then validate.`);
+  cameraStatus.textContent = `Scan applied to face ${targetFace}.`;
+  scrollToSection("input");
+}
+
+/* Events */
+colorPickButtons.forEach((btn) => {
+  btn.addEventListener("click", () => setSelectedColor(btn.dataset.color));
+});
+
+targetFaceButtons.forEach((btn) => {
+  btn.addEventListener("click", () => setTargetFace(btn.dataset.targetFace));
 });
 
 scrambleBtn?.addEventListener("click", generateScramble);
@@ -544,11 +722,11 @@ solveBtn?.addEventListener("click", solveCurrentScramble);
 resetBtn?.addEventListener("click", resetAll);
 
 validateBtn?.addEventListener("click", async () => {
-  const restoreButton = setButtonBusy(validateBtn, "Validating...");
+  const restore = setButtonBusy(validateBtn, "Validating...");
   try {
     await validateManualInput();
   } finally {
-    restoreButton();
+    restore();
   }
 });
 
@@ -561,16 +739,63 @@ jumpToSolverBtn?.addEventListener("click", () => {
   setStatus("Solver workspace opened.");
 });
 
-jumpToInputBtn?.addEventListener("click", () => {
-  scrollToSection("input");
-  setStatus("Manual input panel opened.");
+jumpToCameraBtn?.addEventListener("click", () => {
+  scrollToSection("camera");
+  setStatus("Camera section opened.");
 });
 
+openCameraBtn?.addEventListener("click", openCamera);
+captureFaceBtn?.addEventListener("click", captureFace);
+closeCameraBtn?.addEventListener("click", closeCamera);
+applyScanBtn?.addEventListener("click", applyScanToFace);
+
+/* Face grid clicks */
+function wireFaceGridClicks() {
+  for (const face of NET_FACES) {
+    const container = document.getElementById(`face-${face}`);
+    if (!container) continue;
+
+    container.addEventListener("click", (event) => {
+      const target = event.target.closest(".sticker");
+      if (!target) return;
+      const clickedFace = target.dataset.face;
+      const clickedIndex = Number(target.dataset.index);
+      if (!clickedFace || Number.isNaN(clickedIndex)) return;
+      if (clickedIndex === 4) return;
+      faceState[clickedFace][clickedIndex] = selectedColor;
+      renderFace(clickedFace);
+      faceletBox.textContent = getFaceletString();
+      updateCountsUI();
+      inputStatus.textContent = `Applied ${selectedColor} to ${clickedFace}${clickedIndex + 1}`;
+      validationBox.textContent = "Input updated. Run Validate to check the current state.";
+      liveInputHealth();
+    });
+
+    container.addEventListener("contextmenu", (event) => {
+      const target = event.target.closest(".sticker");
+      if (!target) return;
+      event.preventDefault();
+      const clickedFace = target.dataset.face;
+      const clickedIndex = Number(target.dataset.index);
+      if (!clickedFace || Number.isNaN(clickedIndex) || clickedIndex === 4) return;
+      faceState[clickedFace][clickedIndex] = "X";
+      renderFace(clickedFace);
+      faceletBox.textContent = getFaceletString();
+      updateCountsUI();
+      inputStatus.textContent = `Cleared ${clickedFace}${clickedIndex + 1}`;
+      validationBox.textContent = "Input updated. Run Validate to check the current state.";
+      liveInputHealth();
+    });
+  }
+}
+
+/* Init */
 initializeCenters();
 createFaceGrids();
 wireFaceGridClicks();
 clearNonCenters();
 setSelectedColor("U");
+setTargetFace("U");
 solverStatus.textContent = "Not initialized";
 resetAll();
 validationBox.textContent = "No validation run yet.";
@@ -578,3 +803,6 @@ faceletBox.textContent = getFaceletString();
 inputStatus.textContent = "Waiting for input";
 updateCountsUI();
 setBanner("neutral", "No validation run yet.");
+renderCameraResult(lastScanColors);
+
+window.addEventListener("beforeunload", closeCamera);
