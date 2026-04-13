@@ -657,7 +657,7 @@ function closeCamera() {
 }
 
 function getCenterPatchAverage(ctx, width, height, patchFactor = 0.14) {
-  const gridSize = Math.min(width, height) * 0.48;
+  const gridSize = Math.min(width, height) * 0.40;
   const startX = (width - gridSize) / 2;
   const startY = (height - gridSize) / 2;
   const cell = gridSize / 3;
@@ -699,7 +699,7 @@ function sampleGridColors(ctx, width, height) {
   const startX = (width - gridSize) / 2;
   const startY = (height - gridSize) / 2;
   const cell = gridSize / 3;
-  const patch = cell * 0.15;
+  const patch = cell * 0.10;
 
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
