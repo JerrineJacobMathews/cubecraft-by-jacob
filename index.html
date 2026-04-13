@@ -9,7 +9,7 @@
   <title>CubeCraft by Jacob — Animated Rubik's Cube Solver</title>
   <meta
     name="description"
-    content="CubeCraft by Jacob — a modern animated Rubik's Cube solver web app."     
+    content="CubeCraft by Jacob — a modern animated Rubik's Cube solver web app."
   />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -35,11 +35,11 @@
     <main id="home" class="hero">
       <section class="hero-left">
         <div class="eyebrow">Animated Rubik’s Cube Solver</div>
-        <h2>Now with manual cube entry and solving.</h2>
+        <h2>Now with stronger validation and better manual input.</h2>
         <p class="hero-copy">
-          CubeCraft by Jacob now supports both generated scrambles and manual
-          sticker entry. Paint your cube face by face, validate the state,
-          compute a solution, and animate the solve in the 3D viewer.
+          CubeCraft by Jacob now gives clearer manual-entry guidance with live
+          counts, deeper validation, better sticker editing, and a more robust
+          entered-cube solving flow.
         </p>
 
         <div class="hero-actions">
@@ -54,22 +54,22 @@
           </div>
           <div class="status-card">
             <span class="status-label">Version</span>
-            <strong>v0.4 Manual Input</strong>
+            <strong>v0.5 Validation + UX</strong>
           </div>
           <div class="status-card">
-            <span class="status-label">Solve modes</span>
-            <strong>Scramble + Manual Entry</strong>
+            <span class="status-label">Focus</span>
+            <strong>Reliable manual solving</strong>
           </div>
         </div>
       </section>
 
       <section class="hero-right">
         <div class="hero-highlight">
-          <div class="mini-badge">Step 4 completed</div>
-          <h3>Manual cube-state solving</h3>
+          <div class="mini-badge">Step 5 completed</div>
+          <h3>Stronger validation, smoother editing</h3>
           <p>
-            Enter sticker colors face by face, run a validation pass, solve the
-            cube state, and watch the animated playback in the viewer.
+            Manual cube entry is now easier to use and easier to trust. Paint,
+            clear, validate deeply, and solve with more useful feedback.
           </p>
         </div>
       </section>
@@ -150,7 +150,7 @@
               <li>Real 3D cube display</li>
               <li>Random scramble generation</li>
               <li>Manual sticker input</li>
-              <li>Basic face-count validation</li>
+              <li>Live counts + deep validation</li>
               <li>Computed solution playback</li>
             </ul>
           </div>
@@ -169,7 +169,7 @@
           <div class="palette-row">
             <div class="palette-title">
               <h4>Sticker Palette</h4>
-              <p>Select a color, then click stickers below.</p>
+              <p>Select a color, then click stickers below. Right-click clears a sticker.</p>
             </div>
 
             <div class="palette-buttons">
@@ -197,6 +197,10 @@
                 <span class="swatch swatch-b"></span>
                 <span>Blue</span>
               </button>
+              <button class="color-pick" data-color="X" title="Empty">
+                <span class="swatch swatch-x"></span>
+                <span>Empty</span>
+              </button>
             </div>
           </div>
 
@@ -205,6 +209,21 @@
             <button id="clearInputBtn" class="btn btn-secondary btn-small">Clear Non-Centers</button>
             <button id="validateBtn" class="btn btn-secondary btn-small">Validate</button>
             <button id="solveInputBtn" class="btn btn-primary btn-small">Solve Entered Cube</button>
+          </div>
+
+          <div id="validationBanner" class="validation-banner validation-neutral">
+            No validation run yet.
+          </div>
+
+          <div class="paint-help-row">
+            <div class="paint-help-card">
+              <span class="paint-help-label">Selected paint</span>
+              <strong id="selectedPaintLabel">White (U)</strong>
+            </div>
+            <div class="paint-help-card">
+              <span class="paint-help-label">Editing hint</span>
+              <strong>Left click = paint, Right click = clear</strong>
+            </div>
           </div>
 
           <div class="cube-net">
@@ -249,11 +268,22 @@
         <aside class="input-side-card">
           <h4>Validation</h4>
           <p class="muted">
-            This version checks sticker counts and attempts a solver parse. Centers are locked.
+            This version checks counts, locked centers, parser acceptance, and solvability.
           </p>
 
           <div class="validation-box" id="validationBox">
             No validation run yet.
+          </div>
+
+          <h4 class="section-spacer">Live Color Counts</h4>
+          <div class="counts-grid" id="countsGrid">
+            <div class="count-chip count-u">U: 1 / 9</div>
+            <div class="count-chip count-r">R: 1 / 9</div>
+            <div class="count-chip count-f">F: 1 / 9</div>
+            <div class="count-chip count-d">D: 1 / 9</div>
+            <div class="count-chip count-l">L: 1 / 9</div>
+            <div class="count-chip count-b">B: 1 / 9</div>
+            <div class="count-chip count-x">X: 48</div>
           </div>
 
           <h4 class="section-spacer">Current Facelet String</h4>
@@ -280,23 +310,23 @@
 
     <section class="info-grid">
       <article class="info-card">
-        <h3>Manual Cube Entry</h3>
+        <h3>Live Color Counts</h3>
         <p>
-          You can now paint the cube state directly inside the app using a face-by-face editor.
+          The input sidebar now updates counts immediately so color mistakes are easier to spot.
         </p>
       </article>
 
       <article class="info-card">
-        <h3>Two Solve Modes</h3>
+        <h3>Deeper Validation</h3>
         <p>
-          CubeCraft now supports solving either a generated scramble or a manually entered cube.
+          Validation now checks not only counts, but also solver acceptance and solvability.
         </p>
       </article>
 
       <article class="info-card">
-        <h3>Ready for Camera Later</h3>
+        <h3>Better Editing Flow</h3>
         <p>
-          The manual input system is the foundation for future camera-assisted face scanning.
+          Painting, clearing, and reading the current state are now more guided and easier to use.
         </p>
       </article>
     </section>
@@ -332,11 +362,19 @@
           </div>
         </div>
 
-        <div class="roadmap-item active">
+        <div class="roadmap-item done">
           <span class="step-badge">04</span>
           <div>
             <h4>Manual editor</h4>
             <p>Sticker painting, validation, facelet conversion, and solving entered cubes.</p>
+          </div>
+        </div>
+
+        <div class="roadmap-item active">
+          <span class="step-badge">05</span>
+          <div>
+            <h4>Validation + UX refinement</h4>
+            <p>Live counts, deeper validation, and better manual input guidance.</p>
           </div>
         </div>
       </div>
@@ -344,7 +382,7 @@
 
     <footer class="footer">
       <p>© 2026 CubeCraft by Jacob</p>
-      <p id="footerMessage">Manual input ready.</p>
+      <p id="footerMessage">Validation and UX refinement ready.</p>
     </footer>
   </div>
 
