@@ -275,14 +275,17 @@ function getColorCounts() {
 }
 
 function updateCountsUI() {
-  const counts = getColorCounts();
-  document.querySelector(".count-u").textContent = `U: ${counts.U} / 9`;
-  document.querySelector(".count-r").textContent = `R: ${counts.R} / 9`;
-  document.querySelector(".count-f").textContent = `F: ${counts.F} / 9`;
-  document.querySelector(".count-d").textContent = `D: ${counts.D} / 9`;
-  document.querySelector(".count-l").textContent = `L: ${counts.L} / 9`;
-  document.querySelector(".count-b").textContent = `B: ${counts.B} / 9`;
-  document.querySelector(".count-x").textContent = `X: ${counts.X}`;
+  document.querySelector(".count-u").textContent = `U: ${getColorCounts().U} / 9`;
+  document.querySelector(".count-r").textContent = `R: ${getColorCounts().R} / 9`;
+  document.querySelector(".count-f").textContent = `F: ${getColorCounts().F} / 9`;
+  document.querySelector(".count-d").textContent = `D: ${getColorCounts().D} / 9`;
+  document.querySelector(".count-l").textContent = `L: ${getColorCounts().L} / 9`;
+  document.querySelector(".count-b").textContent = `B: ${getColorCounts().B} / 9`;
+  document.querySelector(".count-x").textContent = `X: ${getColorCounts().X}`;
+}
+
+function getFaceletString() {
+  return FACE_ORDER.map((face) => faceState[face].join("")).join("");
 }
 
 function renderAllFaces() {
@@ -330,43 +333,6 @@ function liveInputHealth() {
   setBanner("success", "Color counts look complete. Run Validate for full checking.");
 }
 
-function handleStickerClick(face, index, colorToApply = selectedColor) {
-  if (index === 4) return;
-  faceState[face][index] = colorToApply;
-  renderFace(face);
-  faceletBox.textContent = getFaceletString();
-  updateCountsUI();
-  inputStatus.textContent = `Applied ${colorToApply} to ${face}${index + 1}`;
-  validationBox.textContent = "Input updated. Run Validate to check the current state.";
-  liveInputHealth();
-}
-
-function wireFaceGridClicks() {
-  for (const face of NET_FACES) {
-    const container = document.getElementById(`face-${face}`);
-    if (!container) continue;
-
-    container.addEventListener("click", (event) => {
-      const target = event.target.closest(".sticker");
-      if (!target) return;
-      const clickedFace = target.dataset.face;
-      const clickedIndex = Number(target.dataset.index);
-      if (!clickedFace || Number.isNaN(clickedIndex)) return;
-      handleStickerClick(clickedFace, clickedIndex, selectedColor);
-    });
-
-    container.addEventListener("contextmenu", (event) => {
-      const target = event.target.closest(".sticker");
-      if (!target) return;
-      event.preventDefault();
-      const clickedFace = target.dataset.face;
-      const clickedIndex = Number(target.dataset.index);
-      if (!clickedFace || Number.isNaN(clickedIndex) || clickedIndex === 4) return;
-      handleStickerClick(clickedFace, clickedIndex, "X");
-    });
-  }
-}
-
 function clearNonCenters() {
   for (const face of FACE_ORDER) {
     for (let i = 0; i < 9; i++) {
@@ -399,10 +365,6 @@ function setSelectedColor(colorCode) {
   selectedPaintLabel.textContent = COLOR_LABELS[colorCode] || colorCode;
 }
 
-function getFaceletString() {
-  return FACE_ORDER.map((face) => faceState[face].join("")).join("");
-}
-
 function validateFaceCounts() {
   const counts = getColorCounts();
   const issues = [];
@@ -418,7 +380,7 @@ function validateFaceCounts() {
     if (counts[color] !== 9) issues.push(`${color} has ${counts[color]} stickers instead of 9.`);
   }
 
-  return { ok: issues.length === 0, counts, issues };
+  return { ok: issues.length === 0, issues };
 }
 
 async function validateManualInput() {
@@ -523,13 +485,7 @@ function renderCameraResult(colors) {
     cell.className = "camera-result-cell";
     cell.classList.add(`sticker-${value}`);
     cell.textContent = value;
-    if (value === "U" || value === "D") {
-      cell.style.color = "#071016";
-    } else if (value === "X") {
-      cell.style.color = "#a8bbcd";
-    } else {
-      cell.style.color = "#071016";
-    }
+    cell.style.color = value === "X" ? "#a8bbcd" : "#071016";
   });
 }
 
@@ -558,6 +514,7 @@ function nearestCubeColor(rgb) {
 async function openCamera() {
   if (!navigator.mediaDevices?.getUserMedia) {
     cameraStatus.textContent = "Camera API not available in this browser.";
+    cameraDebugBox.textContent = "getUserMedia is not supported here.";
     return;
   }
 
@@ -577,15 +534,10 @@ async function openCamera() {
     cameraStream = stream;
     cameraVideo.srcObject = stream;
 
-    const track = stream.getVideoTracks()[0];
-    if (track?.applyConstraints) {
-      try {
-        await track.applyConstraints({
-          advanced: [{ focusMode: "continuous" }]
-        });
-      } catch {
-        // ignore unsupported focus constraint
-      }
+    try {
+      await cameraVideo.play();
+    } catch {
+      // Some browsers autoplay once stream is attached.
     }
 
     cameraStatus.textContent = "Camera opened. Align one face inside the grid.";
@@ -594,7 +546,7 @@ async function openCamera() {
   } catch (error) {
     console.error(error);
     cameraStatus.textContent = "Could not open camera. Check permission and HTTPS.";
-    cameraDebugBox.textContent = String(error);
+    cameraDebugBox.textContent = `${error?.name || "Error"}: ${error?.message || error}`;
   }
 }
 
@@ -749,7 +701,6 @@ captureFaceBtn?.addEventListener("click", captureFace);
 closeCameraBtn?.addEventListener("click", closeCamera);
 applyScanBtn?.addEventListener("click", applyScanToFace);
 
-/* Face grid clicks */
 function wireFaceGridClicks() {
   for (const face of NET_FACES) {
     const container = document.getElementById(`face-${face}`);
@@ -760,8 +711,8 @@ function wireFaceGridClicks() {
       if (!target) return;
       const clickedFace = target.dataset.face;
       const clickedIndex = Number(target.dataset.index);
-      if (!clickedFace || Number.isNaN(clickedIndex)) return;
-      if (clickedIndex === 4) return;
+      if (!clickedFace || Number.isNaN(clickedIndex) || clickedIndex === 4) return;
+
       faceState[clickedFace][clickedIndex] = selectedColor;
       renderFace(clickedFace);
       faceletBox.textContent = getFaceletString();
@@ -778,6 +729,7 @@ function wireFaceGridClicks() {
       const clickedFace = target.dataset.face;
       const clickedIndex = Number(target.dataset.index);
       if (!clickedFace || Number.isNaN(clickedIndex) || clickedIndex === 4) return;
+
       faceState[clickedFace][clickedIndex] = "X";
       renderFace(clickedFace);
       faceletBox.textContent = getFaceletString();
@@ -789,7 +741,6 @@ function wireFaceGridClicks() {
   }
 }
 
-/* Init */
 initializeCenters();
 createFaceGrids();
 wireFaceGridClicks();
