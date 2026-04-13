@@ -26,7 +26,7 @@
 
       <nav class="topnav">
         <a href="#home">Home</a>
-        <a href="#features">Features</a>
+        <a href="#solver">Solver</a>
         <a href="#roadmap">Roadmap</a>
         <a href="#about">About</a>
       </nav>
@@ -35,17 +35,16 @@
     <main id="home" class="hero">
       <section class="hero-left">
         <div class="eyebrow">Animated Rubik’s Cube Solver</div>
-        <h2>Build, scramble, animate, and solve in the browser.</h2>
+        <h2>Now with a real interactive 3D cube viewer.</h2>
         <p class="hero-copy">
-          CubeCraft by Jacob is a modern web-based Rubik’s Cube solver project
-          designed for GitHub Pages. This first version sets up the branded app
-          shell and polished landing page, ready for the animated 3D cube and
-          solver integration in the next step.
+          CubeCraft by Jacob is evolving from a landing page into a real browser-based
+          cube application. This version adds a live 3D cube, scramble flow, playback,
+          and a demo algorithm panel as the foundation for the real solver.
         </p>
 
         <div class="hero-actions">
-          <button id="startBtn" class="btn btn-primary">Start Project</button>
-          <button id="demoBtn" class="btn btn-secondary">View Demo Flow</button>
+          <button id="jumpToSolverBtn" class="btn btn-primary">Open Solver</button>
+          <button id="demoFlowBtn" class="btn btn-secondary">Demo Flow</button>
         </div>
 
         <div class="status-row">
@@ -55,7 +54,7 @@
           </div>
           <div class="status-card">
             <span class="status-label">Version</span>
-            <strong>v0.1 Starter</strong>
+            <strong>v0.2 Interactive Cube</strong>
           </div>
           <div class="status-card">
             <span class="status-label">Target</span>
@@ -65,50 +64,109 @@
       </section>
 
       <section class="hero-right">
-        <div class="cube-panel">
-          <div class="panel-glow"></div>
-
-          <div class="cube-stage">
-            <div class="cube">
-              <div class="face front">C</div>
-              <div class="face back">U</div>
-              <div class="face right">B</div>
-              <div class="face left">E</div>
-              <div class="face top">3×3</div>
-              <div class="face bottom">J</div>
-            </div>
-          </div>
-
-          <div class="cube-caption">
-            <h3>Animated cube placeholder</h3>
-            <p>
-              In the next step, this area will be replaced with the real
-              interactive cube viewer and controls.
-            </p>
-          </div>
+        <div class="hero-highlight">
+          <div class="mini-badge">Step 2 completed</div>
+          <h3>Real cube viewer integrated</h3>
+          <p>
+            The placeholder is gone. The project now has a real animated puzzle panel,
+            ready for scramble, move playback, and later solving.
+          </p>
         </div>
       </section>
     </main>
 
-    <section id="features" class="info-grid">
+    <section id="solver" class="solver-section">
+      <div class="section-title">
+        <span>Solver Workspace</span>
+        <h3>Interactive 3D cube</h3>
+      </div>
+
+      <div class="solver-grid">
+        <div class="viewer-card">
+          <div class="viewer-toolbar">
+            <div class="viewer-title">
+              <h4>Cube Viewer</h4>
+              <p>Interactive 3D playback panel</p>
+            </div>
+
+            <div class="viewer-actions">
+              <button id="scrambleBtn" class="btn btn-primary btn-small">Scramble</button>
+              <button id="demoAlgBtn" class="btn btn-secondary btn-small">Demo Alg</button>
+              <button id="resetBtn" class="btn btn-secondary btn-small">Reset</button>
+            </div>
+          </div>
+
+          <div class="cube-player-shell">
+            <div id="cubeMount" class="cube-mount"></div>
+          </div>
+
+          <div class="viewer-note">
+            <span class="note-dot"></span>
+            <p id="playerStatus">
+              Viewer ready. Press Scramble to generate a fresh cube state.
+            </p>
+          </div>
+        </div>
+
+        <aside class="control-card">
+          <h4>Current Sequence</h4>
+          <p class="muted">
+            This panel shows the algorithm currently loaded into the player.
+          </p>
+
+          <div class="sequence-box" id="sequenceBox">
+            R U R' U'
+          </div>
+
+          <div class="control-stack">
+            <div class="control-item">
+              <span class="control-label">Playback mode</span>
+              <strong>Built into player</strong>
+            </div>
+
+            <div class="control-item">
+              <span class="control-label">Puzzle</span>
+              <strong>3×3×3</strong>
+            </div>
+
+            <div class="control-item">
+              <span class="control-label">Next build step</span>
+              <strong>Solver + manual color entry</strong>
+            </div>
+          </div>
+
+          <div class="helper-card">
+            <h5>What works now</h5>
+            <ul>
+              <li>Real 3D cube display</li>
+              <li>Random scramble generation</li>
+              <li>Demo algorithm loading</li>
+              <li>Reset to solved state</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="info-grid">
       <article class="info-card">
-        <h3>Animated 3D Cube</h3>
+        <h3>Interactive 3D Viewer</h3>
         <p>
-          Smooth cube rotation, scramble playback, and guided solution steps.
+          The main cube area is now a real puzzle component, not a placeholder.
         </p>
       </article>
 
       <article class="info-card">
-        <h3>Solver Integration</h3>
+        <h3>Scramble and Demo Flow</h3>
         <p>
-          Browser-based solving flow with move list, playback, and validation.
+          You can load random scrambles and preview example move sequences.
         </p>
       </article>
 
       <article class="info-card">
-        <h3>Camera Assistant</h3>
+        <h3>Ready for Step 3</h3>
         <p>
-          Future upgrade for camera-based face scanning and color suggestion.
+          The next milestone is connecting solver logic and manual cube-state input.
         </p>
       </article>
     </section>
@@ -120,7 +178,7 @@
       </div>
 
       <div class="roadmap-list">
-        <div class="roadmap-item active">
+        <div class="roadmap-item done">
           <span class="step-badge">01</span>
           <div>
             <h4>Brand + GitHub setup</h4>
@@ -128,11 +186,11 @@
           </div>
         </div>
 
-        <div class="roadmap-item">
+        <div class="roadmap-item active">
           <span class="step-badge">02</span>
           <div>
             <h4>Animated cube integration</h4>
-            <p>Replace placeholder with real cube component and controls.</p>
+            <p>Real interactive viewer and first controls are now in place.</p>
           </div>
         </div>
 
@@ -140,15 +198,15 @@
           <span class="step-badge">03</span>
           <div>
             <h4>Scramble + solve flow</h4>
-            <p>Move sequence playback, action controls, and solver engine.</p>
+            <p>Move sequence playback, solver engine, and real solve output.</p>
           </div>
         </div>
 
         <div class="roadmap-item">
           <span class="step-badge">04</span>
           <div>
-            <h4>Camera assistant</h4>
-            <p>Face scanning helper with correction workflow.</p>
+            <h4>Manual editor + camera assistant</h4>
+            <p>Face input, validation, and future scanning support.</p>
           </div>
         </div>
       </div>
@@ -160,18 +218,18 @@
         <h3>Why this project</h3>
       </div>
       <p>
-        This project is being built as a polished browser-based product that can
-        live publicly on GitHub Pages and later grow into a complete animated
-        Rubik’s Cube solving experience.
+        CubeCraft by Jacob is designed as a polished, public-facing web project
+        that can grow into a complete animated Rubik’s Cube solver experience with
+        step-by-step solving and future camera-assisted input.
       </p>
     </section>
 
     <footer class="footer">
       <p>© 2026 CubeCraft by Jacob</p>
-      <p id="footerMessage">Starter page ready.</p>
+      <p id="footerMessage">Interactive cube ready.</p>
     </footer>
   </div>
 
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
