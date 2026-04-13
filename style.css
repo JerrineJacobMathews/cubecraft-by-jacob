@@ -11,9 +11,9 @@
   --primary-2: #7cc4ff;
   --accent: #8ef0d1;
   --success: #63d59a;
+  --warn: #ffd166;
   --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
   --radius: 24px;
-  --radius-sm: 16px;
   --maxw: 1280px;
 }
 
@@ -194,9 +194,22 @@ ul {
 }
 
 .hero-copy,
+.hero-highlight p,
+.muted,
+.viewer-note p,
+.control-item .control-label,
+.info-card p,
+.roadmap-item p,
+.about p,
+.footer p,
+.helper-card li,
+.viewer-title p {
+  color: var(--muted);
+}
+
+.hero-copy,
 .hero-highlight p {
   margin: 0 0 24px;
-  color: var(--muted);
   font-size: 1.02rem;
   line-height: 1.7;
   max-width: 60ch;
@@ -305,18 +318,6 @@ ul {
   margin: 0 0 6px;
 }
 
-.viewer-title p,
-.muted,
-.viewer-note p,
-.control-item .control-label,
-.info-card p,
-.roadmap-item p,
-.about p,
-.footer p,
-.helper-card li {
-  color: var(--muted);
-}
-
 .viewer-actions {
   display: flex;
   flex-wrap: wrap;
@@ -381,6 +382,11 @@ ul {
   font-family: Consolas, "Courier New", monospace;
   line-height: 1.7;
   word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.section-spacer {
+  margin-top: 18px;
 }
 
 .control-stack {
