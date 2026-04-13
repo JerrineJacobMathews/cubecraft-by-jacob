@@ -180,61 +180,98 @@ async function solveCurrentScramble() {
   }
 }
 
-function createFaceGrids() {
-  for (const face of NET_FACES) {
-    const container = document.getElementById(`face-${face}`);
-    container.innerHTML = "";
-
-    for (let i = 0; i < 9; i++) {
-      const sticker = document.createElement("button");
-      sticker.className = "sticker sticker-X";
-      sticker.type = "button";
-      sticker.dataset.face = face;
-      sticker.dataset.index = String(i);
-
-      const isCenter = i === 4;
-      if (isCenter) {
-        sticker.dataset.locked = "true";
-        sticker.classList.add("center-locked");
-      }
-
-      sticker.addEventListener("click", () => handleStickerClick(face, i));
-      container.appendChild(sticker);
-    }
+function initializeCenters() {
+  for (const face of FACE_ORDER) {
+    faceState[face][4] = CENTER_COLORS[face];
   }
 }
 
-function handleStickerClick(face, index) {
-  if (index === 4) {
-    return;
-  }
-
-  faceState[face][index] = selectedColor;
-  renderFace(face);
-  inputStatus.textContent = "Input updated";
+function getStickerClass(value) {
+  return `sticker-${value || "X"}`;
 }
 
 function renderFace(face) {
   const container = document.getElementById(`face-${face}`);
-  const stickers = container.querySelectorAll(".sticker");
+  if (!container) return;
 
+  const stickers = container.querySelectorAll(".sticker");
   stickers.forEach((sticker, idx) => {
-    const value = faceState[face][idx];
+    const value = faceState[face][idx] || "X";
     sticker.className = "sticker";
+    sticker.classList.add(getStickerClass(value));
+
     if (idx === 4) {
       sticker.classList.add("center-locked");
+      sticker.setAttribute("aria-disabled", "true");
     }
-    sticker.classList.add(`sticker-${value}`);
+
+    sticker.dataset.face = face;
+    sticker.dataset.index = String(idx);
+    sticker.title = `${face}${idx + 1}: ${value}`;
   });
 }
 
 function renderAllFaces() {
-  NET_FACES.forEach(renderFace);
+  for (const face of NET_FACES) {
+    renderFace(face);
+  }
+  faceletBox.textContent = getFaceletString();
 }
 
-function initializeCenters() {
-  for (const face of FACE_ORDER) {
-    faceState[face][4] = CENTER_COLORS[face];
+function buildFaceGrid(face) {
+  const container = document.getElementById(`face-${face}`);
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  for (let i = 0; i < 9; i++) {
+    const sticker = document.createElement("button");
+    sticker.type = "button";
+    sticker.className = "sticker";
+    sticker.dataset.face = face;
+    sticker.dataset.index = String(i);
+
+    if (i === 4) {
+      sticker.classList.add("center-locked");
+      sticker.setAttribute("aria-disabled", "true");
+    }
+
+    container.appendChild(sticker);
+  }
+}
+
+function createFaceGrids() {
+  for (const face of NET_FACES) {
+    buildFaceGrid(face);
+  }
+  renderAllFaces();
+}
+
+function handleStickerClick(face, index) {
+  if (index === 4) return;
+
+  faceState[face][index] = selectedColor;
+  renderFace(face);
+  faceletBox.textContent = getFaceletString();
+  inputStatus.textContent = `Applied ${selectedColor} to ${face}${index + 1}`;
+  validationBox.textContent = "Input updated. Run Validate to check the current state.";
+}
+
+function wireFaceGridClicks() {
+  for (const face of NET_FACES) {
+    const container = document.getElementById(`face-${face}`);
+    if (!container) continue;
+
+    container.addEventListener("click", (event) => {
+      const target = event.target.closest(".sticker");
+      if (!target) return;
+
+      const clickedFace = target.dataset.face;
+      const clickedIndex = Number(target.dataset.index);
+
+      if (!clickedFace || Number.isNaN(clickedIndex)) return;
+      handleStickerClick(clickedFace, clickedIndex);
+    });
   }
 }
 
@@ -244,9 +281,9 @@ function clearNonCenters() {
       faceState[face][i] = i === 4 ? CENTER_COLORS[face] : "X";
     }
   }
+
   renderAllFaces();
   validationBox.textContent = "Cleared all non-center stickers.";
-  faceletBox.textContent = "Not generated yet.";
   inputStatus.textContent = "Cleared";
 }
 
@@ -256,9 +293,9 @@ function fillSolved() {
       faceState[face][i] = CENTER_COLORS[face];
     }
   }
+
   renderAllFaces();
   validationBox.textContent = "Filled with solved cube colors.";
-  faceletBox.textContent = getFaceletString();
   inputStatus.textContent = "Solved template loaded";
 }
 
@@ -275,11 +312,13 @@ function getFaceletString() {
 
 function getColorCounts() {
   const counts = { U: 0, R: 0, F: 0, D: 0, L: 0, B: 0, X: 0 };
+
   for (const face of FACE_ORDER) {
     for (const value of faceState[face]) {
       counts[value] = (counts[value] || 0) + 1;
     }
   }
+
   return counts;
 }
 
@@ -328,7 +367,7 @@ function validateManualInput() {
   } catch (error) {
     validationBox.textContent =
       "Validation failed:\n" +
-      "The solver rejected this cube state. It may be an impossible or inconsistent arrangement.";
+      "The solver rejected this cube state. It may be impossible or inconsistent.";
     inputStatus.textContent = "Validation failed";
     return { ok: false, facelet };
   }
@@ -351,17 +390,15 @@ async function solveManualInput() {
     const cube = Cube.fromString(result.facelet);
     const solution = cube.solve();
 
-    currentScramble = result.facelet;
     currentSolution = solution;
-
     scrambleBox.textContent = "Manual cube state loaded";
-    solutionBox.textContent = solution;
+    solutionBox.textContent = solution || "(already solved)";
     modeStatus.textContent = "Manual entered cube solve";
     inputStatus.textContent = "Solved";
 
     player.experimentalSetupAlg = "";
     player.experimentalSetupAnchor = "end";
-    player.alg = solution;
+    player.alg = solution || "";
 
     solverStatus.textContent = "Solved";
     setStatus("Entered cube solved. Solution loaded into the viewer.");
@@ -399,10 +436,11 @@ jumpToInputBtn?.addEventListener("click", () => {
 
 initializeCenters();
 createFaceGrids();
+wireFaceGridClicks();
 clearNonCenters();
 setSelectedColor("U");
 solverStatus.textContent = "Not initialized";
 resetAll();
 validationBox.textContent = "No validation run yet.";
-faceletBox.textContent = "Not generated yet.";
+faceletBox.textContent = getFaceletString();
 inputStatus.textContent = "Waiting for input";
