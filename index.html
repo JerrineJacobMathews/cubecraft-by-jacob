@@ -27,24 +27,24 @@
       <nav class="topnav">
         <a href="#home">Home</a>
         <a href="#solver">Solver</a>
+        <a href="#input">Input</a>
         <a href="#roadmap">Roadmap</a>
-        <a href="#about">About</a>
       </nav>
     </header>
 
     <main id="home" class="hero">
       <section class="hero-left">
         <div class="eyebrow">Animated Rubik’s Cube Solver</div>
-        <h2>Now with real scramble and solve flow.</h2>
+        <h2>Now with manual cube entry and solving.</h2>
         <p class="hero-copy">
-          CubeCraft by Jacob now goes beyond visualization. This version adds
-          a real 3×3 scramble-to-solution workflow with live algorithm playback,
-          solver initialization, and a dedicated solution panel.
+          CubeCraft by Jacob now supports both generated scrambles and manual
+          sticker entry. Paint your cube face by face, validate the state,
+          compute a solution, and animate the solve in the 3D viewer.
         </p>
 
         <div class="hero-actions">
           <button id="jumpToSolverBtn" class="btn btn-primary">Open Solver</button>
-          <button id="demoFlowBtn" class="btn btn-secondary">How It Works</button>
+          <button id="jumpToInputBtn" class="btn btn-secondary">Open Input Panel</button>
         </div>
 
         <div class="status-row">
@@ -54,23 +54,22 @@
           </div>
           <div class="status-card">
             <span class="status-label">Version</span>
-            <strong>v0.3 Solve Flow</strong>
+            <strong>v0.4 Manual Input</strong>
           </div>
           <div class="status-card">
-            <span class="status-label">Current scope</span>
-            <strong>Generated scramble solving</strong>
+            <span class="status-label">Solve modes</span>
+            <strong>Scramble + Manual Entry</strong>
           </div>
         </div>
       </section>
 
       <section class="hero-right">
         <div class="hero-highlight">
-          <div class="mini-badge">Step 3 completed</div>
-          <h3>Scramble, solve, animate</h3>
+          <div class="mini-badge">Step 4 completed</div>
+          <h3>Manual cube-state solving</h3>
           <p>
-            The viewer can now generate a real scramble, initialize the solving
-            engine, compute a solution, and animate that solution from the
-            scrambled state back to solved.
+            Enter sticker colors face by face, run a validation pass, solve the
+            cube state, and watch the animated playback in the viewer.
           </p>
         </div>
       </section>
@@ -79,7 +78,7 @@
     <section id="solver" class="solver-section">
       <div class="section-title">
         <span>Solver Workspace</span>
-        <h3>Interactive 3D cube + real solve flow</h3>
+        <h3>Interactive 3D cube + solve playback</h3>
       </div>
 
       <div class="solver-grid">
@@ -92,7 +91,7 @@
 
             <div class="viewer-actions">
               <button id="scrambleBtn" class="btn btn-primary btn-small">Scramble</button>
-              <button id="solveBtn" class="btn btn-primary btn-small">Solve</button>
+              <button id="solveBtn" class="btn btn-primary btn-small">Solve Scramble</button>
               <button id="resetBtn" class="btn btn-secondary btn-small">Reset</button>
             </div>
           </div>
@@ -104,7 +103,7 @@
           <div class="viewer-note">
             <span class="note-dot"></span>
             <p id="playerStatus">
-              Ready. Generate a scramble, then solve it.
+              Ready. Generate a scramble, or use the manual input panel.
             </p>
           </div>
         </div>
@@ -121,8 +120,7 @@
 
           <h4 class="section-spacer">Computed Solution</h4>
           <p class="muted">
-            After solving, this panel will show the move sequence that returns the
-            cube to solved state.
+            This panel shows the current solution algorithm.
           </p>
 
           <div class="sequence-box" id="solutionBox">
@@ -136,13 +134,13 @@
             </div>
 
             <div class="control-item">
-              <span class="control-label">Current mode</span>
-              <strong>Random scramble → solve</strong>
+              <span class="control-label">Manual input status</span>
+              <strong id="inputStatus">Waiting for input</strong>
             </div>
 
             <div class="control-item">
-              <span class="control-label">Next build step</span>
-              <strong>Manual cube-state entry</strong>
+              <span class="control-label">Current mode</span>
+              <strong id="modeStatus">Generated scramble solve</strong>
             </div>
           </div>
 
@@ -151,9 +149,129 @@
             <ul>
               <li>Real 3D cube display</li>
               <li>Random scramble generation</li>
-              <li>Real solver initialization</li>
+              <li>Manual sticker input</li>
+              <li>Basic face-count validation</li>
               <li>Computed solution playback</li>
-              <li>Reset to solved state</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="input" class="input-section">
+      <div class="section-title">
+        <span>Manual Input</span>
+        <h3>Paint your cube state</h3>
+      </div>
+
+      <div class="input-grid">
+        <div class="input-main-card">
+          <div class="palette-row">
+            <div class="palette-title">
+              <h4>Sticker Palette</h4>
+              <p>Select a color, then click stickers below.</p>
+            </div>
+
+            <div class="palette-buttons">
+              <button class="color-pick active" data-color="U" title="White">
+                <span class="swatch swatch-u"></span>
+                <span>White</span>
+              </button>
+              <button class="color-pick" data-color="R" title="Red">
+                <span class="swatch swatch-r"></span>
+                <span>Red</span>
+              </button>
+              <button class="color-pick" data-color="F" title="Green">
+                <span class="swatch swatch-f"></span>
+                <span>Green</span>
+              </button>
+              <button class="color-pick" data-color="D" title="Yellow">
+                <span class="swatch swatch-d"></span>
+                <span>Yellow</span>
+              </button>
+              <button class="color-pick" data-color="L" title="Orange">
+                <span class="swatch swatch-l"></span>
+                <span>Orange</span>
+              </button>
+              <button class="color-pick" data-color="B" title="Blue">
+                <span class="swatch swatch-b"></span>
+                <span>Blue</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="input-actions">
+            <button id="fillSolvedBtn" class="btn btn-secondary btn-small">Fill Solved</button>
+            <button id="clearInputBtn" class="btn btn-secondary btn-small">Clear Non-Centers</button>
+            <button id="validateBtn" class="btn btn-secondary btn-small">Validate</button>
+            <button id="solveInputBtn" class="btn btn-primary btn-small">Solve Entered Cube</button>
+          </div>
+
+          <div class="cube-net">
+            <div class="net-row top-row">
+              <div class="face-card" data-face="U">
+                <div class="face-label">U / White</div>
+                <div class="face-grid" id="face-U"></div>
+              </div>
+            </div>
+
+            <div class="net-row middle-row">
+              <div class="face-card" data-face="L">
+                <div class="face-label">L / Orange</div>
+                <div class="face-grid" id="face-L"></div>
+              </div>
+
+              <div class="face-card" data-face="F">
+                <div class="face-label">F / Green</div>
+                <div class="face-grid" id="face-F"></div>
+              </div>
+
+              <div class="face-card" data-face="R">
+                <div class="face-label">R / Red</div>
+                <div class="face-grid" id="face-R"></div>
+              </div>
+
+              <div class="face-card" data-face="B">
+                <div class="face-label">B / Blue</div>
+                <div class="face-grid" id="face-B"></div>
+              </div>
+            </div>
+
+            <div class="net-row bottom-row">
+              <div class="face-card" data-face="D">
+                <div class="face-label">D / Yellow</div>
+                <div class="face-grid" id="face-D"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="input-side-card">
+          <h4>Validation</h4>
+          <p class="muted">
+            This version checks sticker counts and attempts a solver parse. Centers are locked.
+          </p>
+
+          <div class="validation-box" id="validationBox">
+            No validation run yet.
+          </div>
+
+          <h4 class="section-spacer">Current Facelet String</h4>
+          <p class="muted">
+            This is the internal cube state sent to the solver.
+          </p>
+
+          <div class="sequence-box small-box" id="faceletBox">
+            Not generated yet.
+          </div>
+
+          <div class="helper-card">
+            <h5>Input order</h5>
+            <ul>
+              <li>Top: U</li>
+              <li>Middle: L, F, R, B</li>
+              <li>Bottom: D</li>
+              <li>Centers cannot be changed</li>
             </ul>
           </div>
         </aside>
@@ -162,26 +280,23 @@
 
     <section class="info-grid">
       <article class="info-card">
-        <h3>Real Solve Flow</h3>
+        <h3>Manual Cube Entry</h3>
         <p>
-          The app now computes a real solution for the generated scramble and
-          shows the resulting algorithm.
+          You can now paint the cube state directly inside the app using a face-by-face editor.
         </p>
       </article>
 
       <article class="info-card">
-        <h3>Animated Playback</h3>
+        <h3>Two Solve Modes</h3>
         <p>
-          The player animates from the scrambled setup back to solved using the
-          computed solution sequence.
+          CubeCraft now supports solving either a generated scramble or a manually entered cube.
         </p>
       </article>
 
       <article class="info-card">
-        <h3>Ready for Step 4</h3>
+        <h3>Ready for Camera Later</h3>
         <p>
-          The next milestone is manual face input, validation, and camera-assisted
-          scanning later.
+          The manual input system is the foundation for future camera-assisted face scanning.
         </p>
       </article>
     </section>
@@ -209,7 +324,7 @@
           </div>
         </div>
 
-        <div class="roadmap-item active">
+        <div class="roadmap-item done">
           <span class="step-badge">03</span>
           <div>
             <h4>Scramble + solve flow</h4>
@@ -217,39 +332,24 @@
           </div>
         </div>
 
-        <div class="roadmap-item">
+        <div class="roadmap-item active">
           <span class="step-badge">04</span>
           <div>
-            <h4>Manual editor + camera assistant</h4>
-            <p>Face input, validation, and future scanning support.</p>
+            <h4>Manual editor</h4>
+            <p>Sticker painting, validation, facelet conversion, and solving entered cubes.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="about" class="about">
-      <div class="section-title">
-        <span>About</span>
-        <h3>Why this project</h3>
-      </div>
-      <p>
-        CubeCraft by Jacob is being built as a polished public web app that starts
-        with animated scramble/solve playback and grows into a complete solver
-        with guided input and camera-assisted workflows.
-      </p>
-    </section>
-
     <footer class="footer">
       <p>© 2026 CubeCraft by Jacob</p>
-      <p id="footerMessage">Solve flow ready.</p>
+      <p id="footerMessage">Manual input ready.</p>
     </footer>
   </div>
 
-  <!-- cube.js solver library -->
   <script src="https://cdn.jsdelivr.net/npm/cubejs@1.3.2/lib/cube.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/cubejs@1.3.2/lib/solve.js"></script>
-
-  <!-- app -->
   <script type="module" src="app.js"></script>
 </body>
 </html>
