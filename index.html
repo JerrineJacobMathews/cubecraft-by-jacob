@@ -35,16 +35,16 @@
     <main id="home" class="hero">
       <section class="hero-left">
         <div class="eyebrow">Animated Rubik’s Cube Solver</div>
-        <h2>Now with a real interactive 3D cube viewer.</h2>
+        <h2>Now with real scramble and solve flow.</h2>
         <p class="hero-copy">
-          CubeCraft by Jacob is evolving from a landing page into a real browser-based
-          cube application. This version adds a live 3D cube, scramble flow, playback,
-          and a demo algorithm panel as the foundation for the real solver.
+          CubeCraft by Jacob now goes beyond visualization. This version adds
+          a real 3×3 scramble-to-solution workflow with live algorithm playback,
+          solver initialization, and a dedicated solution panel.
         </p>
 
         <div class="hero-actions">
           <button id="jumpToSolverBtn" class="btn btn-primary">Open Solver</button>
-          <button id="demoFlowBtn" class="btn btn-secondary">Demo Flow</button>
+          <button id="demoFlowBtn" class="btn btn-secondary">How It Works</button>
         </div>
 
         <div class="status-row">
@@ -54,22 +54,23 @@
           </div>
           <div class="status-card">
             <span class="status-label">Version</span>
-            <strong>v0.2 Interactive Cube</strong>
+            <strong>v0.3 Solve Flow</strong>
           </div>
           <div class="status-card">
-            <span class="status-label">Target</span>
-            <strong>GitHub Pages</strong>
+            <span class="status-label">Current scope</span>
+            <strong>Generated scramble solving</strong>
           </div>
         </div>
       </section>
 
       <section class="hero-right">
         <div class="hero-highlight">
-          <div class="mini-badge">Step 2 completed</div>
-          <h3>Real cube viewer integrated</h3>
+          <div class="mini-badge">Step 3 completed</div>
+          <h3>Scramble, solve, animate</h3>
           <p>
-            The placeholder is gone. The project now has a real animated puzzle panel,
-            ready for scramble, move playback, and later solving.
+            The viewer can now generate a real scramble, initialize the solving
+            engine, compute a solution, and animate that solution from the
+            scrambled state back to solved.
           </p>
         </div>
       </section>
@@ -78,7 +79,7 @@
     <section id="solver" class="solver-section">
       <div class="section-title">
         <span>Solver Workspace</span>
-        <h3>Interactive 3D cube</h3>
+        <h3>Interactive 3D cube + real solve flow</h3>
       </div>
 
       <div class="solver-grid">
@@ -86,12 +87,12 @@
           <div class="viewer-toolbar">
             <div class="viewer-title">
               <h4>Cube Viewer</h4>
-              <p>Interactive 3D playback panel</p>
+              <p>Scramble, solve, and playback panel</p>
             </div>
 
             <div class="viewer-actions">
               <button id="scrambleBtn" class="btn btn-primary btn-small">Scramble</button>
-              <button id="demoAlgBtn" class="btn btn-secondary btn-small">Demo Alg</button>
+              <button id="solveBtn" class="btn btn-primary btn-small">Solve</button>
               <button id="resetBtn" class="btn btn-secondary btn-small">Reset</button>
             </div>
           </div>
@@ -103,35 +104,45 @@
           <div class="viewer-note">
             <span class="note-dot"></span>
             <p id="playerStatus">
-              Viewer ready. Press Scramble to generate a fresh cube state.
+              Ready. Generate a scramble, then solve it.
             </p>
           </div>
         </div>
 
         <aside class="control-card">
-          <h4>Current Sequence</h4>
+          <h4>Current Scramble</h4>
           <p class="muted">
-            This panel shows the algorithm currently loaded into the player.
+            This is the randomly generated state currently loaded into the cube.
           </p>
 
-          <div class="sequence-box" id="sequenceBox">
-            R U R' U'
+          <div class="sequence-box" id="scrambleBox">
+            No scramble loaded yet.
+          </div>
+
+          <h4 class="section-spacer">Computed Solution</h4>
+          <p class="muted">
+            After solving, this panel will show the move sequence that returns the
+            cube to solved state.
+          </p>
+
+          <div class="sequence-box" id="solutionBox">
+            No solution yet.
           </div>
 
           <div class="control-stack">
             <div class="control-item">
-              <span class="control-label">Playback mode</span>
-              <strong>Built into player</strong>
+              <span class="control-label">Solver status</span>
+              <strong id="solverStatus">Not initialized</strong>
             </div>
 
             <div class="control-item">
-              <span class="control-label">Puzzle</span>
-              <strong>3×3×3</strong>
+              <span class="control-label">Current mode</span>
+              <strong>Random scramble → solve</strong>
             </div>
 
             <div class="control-item">
               <span class="control-label">Next build step</span>
-              <strong>Solver + manual color entry</strong>
+              <strong>Manual cube-state entry</strong>
             </div>
           </div>
 
@@ -140,7 +151,8 @@
             <ul>
               <li>Real 3D cube display</li>
               <li>Random scramble generation</li>
-              <li>Demo algorithm loading</li>
+              <li>Real solver initialization</li>
+              <li>Computed solution playback</li>
               <li>Reset to solved state</li>
             </ul>
           </div>
@@ -150,23 +162,26 @@
 
     <section class="info-grid">
       <article class="info-card">
-        <h3>Interactive 3D Viewer</h3>
+        <h3>Real Solve Flow</h3>
         <p>
-          The main cube area is now a real puzzle component, not a placeholder.
+          The app now computes a real solution for the generated scramble and
+          shows the resulting algorithm.
         </p>
       </article>
 
       <article class="info-card">
-        <h3>Scramble and Demo Flow</h3>
+        <h3>Animated Playback</h3>
         <p>
-          You can load random scrambles and preview example move sequences.
+          The player animates from the scrambled setup back to solved using the
+          computed solution sequence.
         </p>
       </article>
 
       <article class="info-card">
-        <h3>Ready for Step 3</h3>
+        <h3>Ready for Step 4</h3>
         <p>
-          The next milestone is connecting solver logic and manual cube-state input.
+          The next milestone is manual face input, validation, and camera-assisted
+          scanning later.
         </p>
       </article>
     </section>
@@ -186,19 +201,19 @@
           </div>
         </div>
 
-        <div class="roadmap-item active">
+        <div class="roadmap-item done">
           <span class="step-badge">02</span>
           <div>
             <h4>Animated cube integration</h4>
-            <p>Real interactive viewer and first controls are now in place.</p>
+            <p>Real interactive viewer and first controls are in place.</p>
           </div>
         </div>
 
-        <div class="roadmap-item">
+        <div class="roadmap-item active">
           <span class="step-badge">03</span>
           <div>
             <h4>Scramble + solve flow</h4>
-            <p>Move sequence playback, solver engine, and real solve output.</p>
+            <p>Generated scramble solving and animated solution playback.</p>
           </div>
         </div>
 
@@ -218,18 +233,23 @@
         <h3>Why this project</h3>
       </div>
       <p>
-        CubeCraft by Jacob is designed as a polished, public-facing web project
-        that can grow into a complete animated Rubik’s Cube solver experience with
-        step-by-step solving and future camera-assisted input.
+        CubeCraft by Jacob is being built as a polished public web app that starts
+        with animated scramble/solve playback and grows into a complete solver
+        with guided input and camera-assisted workflows.
       </p>
     </section>
 
     <footer class="footer">
       <p>© 2026 CubeCraft by Jacob</p>
-      <p id="footerMessage">Interactive cube ready.</p>
+      <p id="footerMessage">Solve flow ready.</p>
     </footer>
   </div>
 
+  <!-- cube.js solver library -->
+  <script src="https://cdn.jsdelivr.net/npm/cubejs@1.3.2/lib/cube.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/cubejs@1.3.2/lib/solve.js"></script>
+
+  <!-- app -->
   <script type="module" src="app.js"></script>
 </body>
 </html>
