@@ -35,6 +35,7 @@ const jumpToCameraBtn = document.getElementById("jumpToCameraBtn");
 
 const openCameraBtn = document.getElementById("openCameraBtn");
 const captureFaceBtn = document.getElementById("captureFaceBtn");
+const calibrateCenterBtn = document.getElementById("calibrateCenterBtn");
 const closeCameraBtn = document.getElementById("closeCameraBtn");
 const applyScanBtn = document.getElementById("applyScanBtn");
 
@@ -64,6 +65,16 @@ const COLOR_LABELS = {
   X: "Empty (X)"
 };
 
+const DEFAULT_COLOR_RGB = {
+  U: [245, 247, 250],
+  R: [255, 90, 90],
+  F: [68, 210, 124],
+  D: [255, 216, 77],
+  L: [255, 154, 60],
+  B: [76, 162, 255]
+};
+
+/* ---------- State ---------- */
 let selectedColor = "U";
 let targetFace = "U";
 let currentScramble = "";
@@ -72,6 +83,16 @@ let solverInitialized = false;
 let currentCube = null;
 let cameraStream = null;
 let lastScanColors = Array(9).fill("X");
+
+/* calibrated references, starts with defaults */
+const calibratedColorRGB = {
+  U: [...DEFAULT_COLOR_RGB.U],
+  R: [...DEFAULT_COLOR_RGB.R],
+  F: [...DEFAULT_COLOR_RGB.F],
+  D: [...DEFAULT_COLOR_RGB.D],
+  L: [...DEFAULT_COLOR_RGB.L],
+  B: [...DEFAULT_COLOR_RGB.B]
+};
 
 const faceState = {
   U: Array(9).fill("X"),
@@ -93,9 +114,7 @@ const player = new TwistyPlayer({
   experimentalSetupAnchor: "end"
 });
 
-if (cubeMount) {
-  cubeMount.appendChild(player);
-}
+if (cubeMount) cubeMount.appendChild(player);
 
 /* ---------- Helpers ---------- */
 function setStatus(message) {
@@ -518,7 +537,6 @@ function renderCameraResult(colors) {
   });
 }
 
-/* Better color classification */
 function rgbToHsv(r, g, b) {
   r /= 255;
   g /= 255;
@@ -546,75 +564,43 @@ function rgbToHsv(r, g, b) {
     }
   }
 
-  return {
-    h: h * 360,
-    s,
-    v
-  };
+  return { h: h * 360, s, v };
 }
 
-function classifyColorSmart(rgb) {
+function classifyByRules(rgb) {
   const [r, g, b] = rgb;
   const hsv = rgbToHsv(r, g, b);
 
-  /* white */
-  if (hsv.v > 0.72 && hsv.s < 0.20) {
-    return "U";
-  }
+  if (hsv.v > 0.72 && hsv.s < 0.20) return "U";
+  if (hsv.h >= 40 && hsv.h <= 75 && hsv.s > 0.25 && hsv.v > 0.45) return "D";
+  if (hsv.h >= 75 && hsv.h <= 165 && hsv.s > 0.22) return "F";
+  if (hsv.h >= 180 && hsv.h <= 260 && hsv.s > 0.22) return "B";
+  if ((hsv.h >= 0 && hsv.h <= 18) || (hsv.h >= 340 && hsv.h <= 360)) return "R";
+  if (hsv.h > 18 && hsv.h < 40) return "L";
 
-  /* yellow */
-  if (hsv.h >= 40 && hsv.h <= 75 && hsv.s > 0.25 && hsv.v > 0.45) {
-    return "D";
-  }
+  return null;
+}
 
-  /* green */
-  if (hsv.h >= 75 && hsv.h <= 165 && hsv.s > 0.22) {
-    return "F";
-  }
-
-  /* blue */
-  if (hsv.h >= 180 && hsv.h <= 260 && hsv.s > 0.22) {
-    return "B";
-  }
-
-  /* red */
-  if ((hsv.h >= 0 && hsv.h <= 18) || (hsv.h >= 340 && hsv.h <= 360)) {
-    return "R";
-  }
-
-  /* orange */
-  if (hsv.h > 18 && hsv.h < 40) {
-    return "L";
-  }
-
-  /* fallback nearest RGB */
+function nearestCalibratedColor(rgb) {
   let best = "U";
   let bestDist = Number.POSITIVE_INFINITY;
 
-  for (const [code, ref] of Object.entries({
-    U: [245, 247, 250],
-    R: [255, 90, 90],
-    F: [68, 210, 124],
-    D: [255, 216, 77],
-    L: [255, 154, 60],
-    B: [76, 162, 255]
-  })) {
-    const dr = r - ref[0];
-    const dg = g - ref[1];
-    const db = b - ref[2];
+  for (const [code, ref] of Object.entries(calibratedColorRGB)) {
+    const dr = rgb[0] - ref[0];
+    const dg = rgb[1] - ref[1];
+    const db = rgb[2] - ref[2];
     const dist = dr * dr + dg * dg + db * db;
+
     if (dist < bestDist) {
       bestDist = dist;
       best = code;
     }
   }
 
-  return best;
+  return { code: best, distance: Math.sqrt(bestDist) };
 }
 
 async function openCamera() {
-  console.log("Open Camera clicked");
-
   if (cameraStatus) cameraStatus.textContent = "Opening camera...";
   if (cameraDebugBox) cameraDebugBox.textContent = "Trying to access camera...";
 
@@ -637,9 +623,7 @@ async function openCamera() {
     });
 
     cameraStream = stream;
-    if (cameraVideo) {
-      cameraVideo.srcObject = stream;
-    }
+    if (cameraVideo) cameraVideo.srcObject = stream;
 
     try {
       await cameraVideo?.play();
@@ -647,7 +631,7 @@ async function openCamera() {
       console.error("cameraVideo.play failed:", playError);
     }
 
-    if (cameraStatus) cameraStatus.textContent = "Camera opened successfully. Hold one face centered and straight.";
+    if (cameraStatus) cameraStatus.textContent = "Camera opened. Keep one face centered, straight, and well lit.";
     if (cameraDebugBox) cameraDebugBox.textContent = "Camera stream started.";
   } catch (error) {
     console.error("openCamera failed:", error);
@@ -672,6 +656,42 @@ function closeCamera() {
   if (cameraDebugBox) cameraDebugBox.textContent = "No capture yet.";
 }
 
+function getCenterPatchAverage(ctx, width, height, patchFactor = 0.14) {
+  const gridSize = Math.min(width, height) * 0.48;
+  const startX = (width - gridSize) / 2;
+  const startY = (height - gridSize) / 2;
+  const cell = gridSize / 3;
+
+  const centerX = startX + 1.5 * cell;
+  const centerY = startY + 1.5 * cell;
+  const patch = cell * patchFactor;
+
+  const x = Math.max(0, Math.floor(centerX - patch / 2));
+  const y = Math.max(0, Math.floor(centerY - patch / 2));
+  const w = Math.max(1, Math.floor(patch));
+  const h = Math.max(1, Math.floor(patch));
+
+  const imageData = ctx.getImageData(x, y, w, h).data;
+
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let count = 0;
+
+  for (let i = 0; i < imageData.length; i += 4) {
+    r += imageData[i];
+    g += imageData[i + 1];
+    b += imageData[i + 2];
+    count++;
+  }
+
+  return [
+    Math.round(r / count),
+    Math.round(g / count),
+    Math.round(b / count)
+  ];
+}
+
 function sampleGridColors(ctx, width, height) {
   const results = [];
 
@@ -679,53 +699,57 @@ function sampleGridColors(ctx, width, height) {
   const startX = (width - gridSize) / 2;
   const startY = (height - gridSize) / 2;
   const cell = gridSize / 3;
-  const patch = cell * 0.18;
+  const patch = cell * 0.15;
 
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
       const centerX = startX + (col + 0.5) * cell;
       const centerY = startY + (row + 0.5) * cell;
 
-      const sampleOffsets = [
+      const offsets = [
         [0, 0],
-        [-patch * 0.35, 0],
-        [patch * 0.35, 0],
-        [0, -patch * 0.35],
-        [0, patch * 0.35]
+        [-patch * 0.25, 0],
+        [patch * 0.25, 0],
+        [0, -patch * 0.25],
+        [0, patch * 0.25]
       ];
 
-      let allR = 0;
-      let allG = 0;
-      let allB = 0;
+      let sumR = 0;
+      let sumG = 0;
+      let sumB = 0;
       let totalPixels = 0;
 
-      for (const [ox, oy] of sampleOffsets) {
+      for (const [ox, oy] of offsets) {
         const x = Math.max(0, Math.floor(centerX + ox - patch / 2));
         const y = Math.max(0, Math.floor(centerY + oy - patch / 2));
         const w = Math.max(1, Math.floor(patch));
         const h = Math.max(1, Math.floor(patch));
 
-        const imageData = ctx.getImageData(x, y, w, h).data;
+        const data = ctx.getImageData(x, y, w, h).data;
 
-        for (let i = 0; i < imageData.length; i += 4) {
-          allR += imageData[i];
-          allG += imageData[i + 1];
-          allB += imageData[i + 2];
+        for (let i = 0; i < data.length; i += 4) {
+          sumR += data[i];
+          sumG += data[i + 1];
+          sumB += data[i + 2];
           totalPixels++;
         }
       }
 
       const avg = [
-        Math.round(allR / totalPixels),
-        Math.round(allG / totalPixels),
-        Math.round(allB / totalPixels)
+        Math.round(sumR / totalPixels),
+        Math.round(sumG / totalPixels),
+        Math.round(sumB / totalPixels)
       ];
 
-      const code = classifyColorSmart(avg);
+      const ruleGuess = classifyByRules(avg);
+      const nearestGuess = nearestCalibratedColor(avg);
+      const finalCode = ruleGuess || nearestGuess.code;
 
       results.push({
         rgb: avg,
-        code
+        code: finalCode,
+        nearest: nearestGuess.code,
+        dist: Math.round(nearestGuess.distance)
       });
     }
   }
@@ -737,6 +761,43 @@ function forceCenterColor(colors, face) {
   const out = [...colors];
   out[4] = CENTER_COLORS[face];
   return out;
+}
+
+function calibrateCurrentFaceCenter() {
+  if (!cameraStream || !cameraVideo?.videoWidth || !cameraVideo?.videoHeight) {
+    if (cameraStatus) cameraStatus.textContent = "Camera is not ready yet.";
+    return;
+  }
+
+  if (!captureCanvas) return;
+
+  const width = cameraVideo.videoWidth;
+  const height = cameraVideo.videoHeight;
+
+  captureCanvas.width = width;
+  captureCanvas.height = height;
+
+  const ctx = captureCanvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return;
+
+  ctx.drawImage(cameraVideo, 0, 0, width, height);
+
+  const rgb = getCenterPatchAverage(ctx, width, height);
+  calibratedColorRGB[targetFace] = rgb;
+
+  if (cameraStatus) {
+    cameraStatus.textContent = `Calibrated center color for face ${targetFace}.`;
+  }
+
+  if (cameraDebugBox) {
+    cameraDebugBox.textContent =
+      `Calibrated ${targetFace} center\n` +
+      `RGB = (${rgb.join(", ")})\n\n` +
+      `Current calibrated references:\n` +
+      Object.entries(calibratedColorRGB)
+        .map(([k, v]) => `${k}: (${v.join(", ")})`)
+        .join("\n");
+  }
 }
 
 function captureFace() {
@@ -766,7 +827,7 @@ function captureFace() {
 
   const lines = samples.map((s, i) => {
     const hsv = rgbToHsv(s.rgb[0], s.rgb[1], s.rgb[2]);
-    return `${i + 1}: rgb(${s.rgb.join(", ")}) -> ${guessed[i]} | h=${hsv.h.toFixed(1)} s=${hsv.s.toFixed(2)} v=${hsv.v.toFixed(2)}`;
+    return `${i + 1}: rgb(${s.rgb.join(", ")}) -> ${guessed[i]} | nearest=${s.nearest} | d=${s.dist} | h=${hsv.h.toFixed(1)} s=${hsv.s.toFixed(2)} v=${hsv.v.toFixed(2)}`;
   });
 
   if (cameraStatus) {
@@ -839,8 +900,9 @@ jumpToCameraBtn?.addEventListener("click", () => {
 });
 
 openCameraBtn?.addEventListener("click", openCamera);
-closeCameraBtn?.addEventListener("click", closeCamera);
 captureFaceBtn?.addEventListener("click", captureFace);
+calibrateCenterBtn?.addEventListener("click", calibrateCurrentFaceCenter);
+closeCameraBtn?.addEventListener("click", closeCamera);
 applyScanBtn?.addEventListener("click", applyScanToFace);
 
 function wireFaceGridClicks() {
