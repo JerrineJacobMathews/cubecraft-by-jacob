@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>CubeCraft by Jacob — Animated Rubik's Cube Solver</title>
+  <meta
+    name="description"
+    content="CubeCraft by Jacob — a modern animated Rubik's Cube solver web app."
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">CC</div>
+        <div class="brand-text">
+          <h1>CubeCraft</h1>
+          <p>by Jacob</p>
+        </div>
+      </div>
+
+      <nav class="topnav">
+        <a href="#home">Home</a>
+        <a href="#features">Features</a>
+        <a href="#roadmap">Roadmap</a>
+        <a href="#about">About</a>
+      </nav>
+    </header>
+
+    <main id="home" class="hero">
+      <section class="hero-left">
+        <div class="eyebrow">Animated Rubik’s Cube Solver</div>
+        <h2>Build, scramble, animate, and solve in the browser.</h2>
+        <p class="hero-copy">
+          CubeCraft by Jacob is a modern web-based Rubik’s Cube solver project
+          designed for GitHub Pages. This first version sets up the branded app
+          shell and polished landing page, ready for the animated 3D cube and
+          solver integration in the next step.
+        </p>
+
+        <div class="hero-actions">
+          <button id="startBtn" class="btn btn-primary">Start Project</button>
+          <button id="demoBtn" class="btn btn-secondary">View Demo Flow</button>
+        </div>
+
+        <div class="status-row">
+          <div class="status-card">
+            <span class="status-label">Project</span>
+            <strong>CubeCraft by Jacob</strong>
+          </div>
+          <div class="status-card">
+            <span class="status-label">Version</span>
+            <strong>v0.1 Starter</strong>
+          </div>
+          <div class="status-card">
+            <span class="status-label">Target</span>
+            <strong>GitHub Pages</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="hero-right">
+        <div class="cube-panel">
+          <div class="panel-glow"></div>
+
+          <div class="cube-stage">
+            <div class="cube">
+              <div class="face front">C</div>
+              <div class="face back">U</div>
+              <div class="face right">B</div>
+              <div class="face left">E</div>
+              <div class="face top">3×3</div>
+              <div class="face bottom">J</div>
+            </div>
+          </div>
+
+          <div class="cube-caption">
+            <h3>Animated cube placeholder</h3>
+            <p>
+              In the next step, this area will be replaced with the real
+              interactive cube viewer and controls.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <section id="features" class="info-grid">
+      <article class="info-card">
+        <h3>Animated 3D Cube</h3>
+        <p>
+          Smooth cube rotation, scramble playback, and guided solution steps.
+        </p>
+      </article>
+
+      <article class="info-card">
+        <h3>Solver Integration</h3>
+        <p>
+          Browser-based solving flow with move list, playback, and validation.
+        </p>
+      </article>
+
+      <article class="info-card">
+        <h3>Camera Assistant</h3>
+        <p>
+          Future upgrade for camera-based face scanning and color suggestion.
+        </p>
+      </article>
+    </section>
+
+    <section id="roadmap" class="roadmap">
+      <div class="section-title">
+        <span>Roadmap</span>
+        <h3>Planned build path</h3>
+      </div>
+
+      <div class="roadmap-list">
+        <div class="roadmap-item active">
+          <span class="step-badge">01</span>
+          <div>
+            <h4>Brand + GitHub setup</h4>
+            <p>Repository, GitHub Pages structure, polished landing page.</p>
+          </div>
+        </div>
+
+        <div class="roadmap-item">
+          <span class="step-badge">02</span>
+          <div>
+            <h4>Animated cube integration</h4>
+            <p>Replace placeholder with real cube component and controls.</p>
+          </div>
+        </div>
+
+        <div class="roadmap-item">
+          <span class="step-badge">03</span>
+          <div>
+            <h4>Scramble + solve flow</h4>
+            <p>Move sequence playback, action controls, and solver engine.</p>
+          </div>
+        </div>
+
+        <div class="roadmap-item">
+          <span class="step-badge">04</span>
+          <div>
+            <h4>Camera assistant</h4>
+            <p>Face scanning helper with correction workflow.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" class="about">
+      <div class="section-title">
+        <span>About</span>
+        <h3>Why this project</h3>
+      </div>
+      <p>
+        This project is being built as a polished browser-based product that can
+        live publicly on GitHub Pages and later grow into a complete animated
+        Rubik’s Cube solving experience.
+      </p>
+    </section>
+
+    <footer class="footer">
+      <p>© 2026 CubeCraft by Jacob</p>
+      <p id="footerMessage">Starter page ready.</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
