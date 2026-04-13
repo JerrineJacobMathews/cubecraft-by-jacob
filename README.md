@@ -7,19 +7,21 @@ This version includes:
 - branded landing page
 - real interactive 3D cube viewer
 - random scramble generation
-- real solver initialization
-- computed solution playback
-- reset to solved state
+- manual sticker input
+- basic validation
+- solve generated scrambles
+- solve manually entered cube states
 - polished dark UI
 
-## Current solve mode
-This version solves generated 3×3 scrambles inside the browser.
+## Current solve modes
+1. Generated scramble solve
+2. Manual cube-state solve
 
 ## Next steps
-1. Add manual cube-state entry
-2. Add validation flow
-3. Add camera-assisted face scanning
-4. Add guided solving UX
+1. Stronger cube-state validation
+2. Better guided solving UI
+3. Camera-assisted face scanning
+4. Mobile polish and tutorial mode
 
 ## Tech direction
 - HTML
