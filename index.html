@@ -9,7 +9,7 @@
   <title>CubeCraft by Jacob — Animated Rubik's Cube Solver</title>
   <meta
     name="description"
-    content="CubeCraft by Jacob — a modern animated Rubik's Cube solver web app." 
+    content="CubeCraft by Jacob — a modern animated Rubik's Cube solver web app."
   />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -28,6 +28,7 @@
         <a href="#home">Home</a>
         <a href="#solver">Solver</a>
         <a href="#input">Input</a>
+        <a href="#camera">Camera</a>
         <a href="#roadmap">Roadmap</a>
       </nav>
     </header>
@@ -35,16 +36,16 @@
     <main id="home" class="hero">
       <section class="hero-left">
         <div class="eyebrow">Animated Rubik’s Cube Solver</div>
-        <h2>Now with stronger validation and better manual input.</h2>
+        <h2>Now with camera-assisted face capture.</h2>
         <p class="hero-copy">
-          CubeCraft by Jacob now gives clearer manual-entry guidance with live
-          counts, deeper validation, better sticker editing, and a more robust
-          entered-cube solving flow.
+          CubeCraft by Jacob can now open your camera, guide you with a 3×3 overlay,
+          sample the visible sticker colors, and apply a guessed face directly into
+          the manual editor for correction and solving.
         </p>
 
         <div class="hero-actions">
           <button id="jumpToSolverBtn" class="btn btn-primary">Open Solver</button>
-          <button id="jumpToInputBtn" class="btn btn-secondary">Open Input Panel</button>
+          <button id="jumpToCameraBtn" class="btn btn-secondary">Open Camera</button>
         </div>
 
         <div class="status-row">
@@ -54,22 +55,22 @@
           </div>
           <div class="status-card">
             <span class="status-label">Version</span>
-            <strong>v0.5 Validation + UX</strong>
+            <strong>v0.6 Camera Assist</strong>
           </div>
           <div class="status-card">
-            <span class="status-label">Focus</span>
-            <strong>Reliable manual solving</strong>
+            <span class="status-label">New mode</span>
+            <strong>Face scan helper</strong>
           </div>
         </div>
       </section>
 
       <section class="hero-right">
         <div class="hero-highlight">
-          <div class="mini-badge">Step 5 completed</div>
-          <h3>Stronger validation, smoother editing</h3>
+          <div class="mini-badge">Step 6 completed</div>
+          <h3>Camera-guided face entry</h3>
           <p>
-            Manual cube entry is now easier to use and easier to trust. Paint,
-            clear, validate deeply, and solve with more useful feedback.
+            Use your phone or laptop camera to capture one face at a time, then
+            review and correct the guessed colors in the manual input grid.
           </p>
         </div>
       </section>
@@ -103,29 +104,21 @@
           <div class="viewer-note">
             <span class="note-dot"></span>
             <p id="playerStatus">
-              Ready. Generate a scramble, or use the manual input panel.
+              Ready. Generate a scramble, use manual input, or try camera capture.
             </p>
           </div>
         </div>
 
         <aside class="control-card">
           <h4>Current Scramble</h4>
-          <p class="muted">
-            This is the randomly generated state currently loaded into the cube.
-          </p>
+          <p class="muted">This is the randomly generated state currently loaded into the cube.</p>
 
-          <div class="sequence-box" id="scrambleBox">
-            No scramble loaded yet.
-          </div>
+          <div class="sequence-box" id="scrambleBox">No scramble loaded yet.</div>
 
           <h4 class="section-spacer">Computed Solution</h4>
-          <p class="muted">
-            This panel shows the current solution algorithm.
-          </p>
+          <p class="muted">This panel shows the current solution algorithm.</p>
 
-          <div class="sequence-box" id="solutionBox">
-            No solution yet.
-          </div>
+          <div class="sequence-box" id="solutionBox">No solution yet.</div>
 
           <div class="control-stack">
             <div class="control-item">
@@ -143,16 +136,84 @@
               <strong id="modeStatus">Generated scramble solve</strong>
             </div>
           </div>
+        </aside>
+      </div>
+    </section>
 
-          <div class="helper-card">
-            <h5>What works now</h5>
-            <ul>
-              <li>Real 3D cube display</li>
-              <li>Random scramble generation</li>
-              <li>Manual sticker input</li>
-              <li>Live counts + deep validation</li>
-              <li>Computed solution playback</li>
-            </ul>
+    <section id="camera" class="camera-section">
+      <div class="section-title">
+        <span>Camera Assist</span>
+        <h3>Capture one face at a time</h3>
+      </div>
+
+      <div class="camera-grid">
+        <div class="camera-main-card">
+          <div class="camera-toolbar">
+            <div>
+              <h4>Live Camera Preview</h4>
+              <p class="muted">Align one cube face inside the grid, then capture.</p>
+            </div>
+
+            <div class="viewer-actions">
+              <button id="openCameraBtn" class="btn btn-primary btn-small">Open Camera</button>
+              <button id="captureFaceBtn" class="btn btn-primary btn-small">Capture Face</button>
+              <button id="closeCameraBtn" class="btn btn-secondary btn-small">Close Camera</button>
+            </div>
+          </div>
+
+          <div class="camera-stage">
+            <video id="cameraVideo" playsinline autoplay muted></video>
+            <div class="camera-overlay">
+              <div class="scan-grid">
+                <div></div><div></div><div></div>
+                <div></div><div class="scan-center"></div><div></div>
+                <div></div><div></div><div></div>
+              </div>
+            </div>
+          </div>
+
+          <canvas id="captureCanvas" class="hidden-canvas"></canvas>
+
+          <div class="viewer-note">
+            <span class="note-dot"></span>
+            <p id="cameraStatus">Camera is closed.</p>
+          </div>
+        </div>
+
+        <aside class="camera-side-card">
+          <h4>Face Capture Target</h4>
+          <p class="muted">Choose which face to write into the manual editor.</p>
+
+          <div class="target-face-row">
+            <button class="target-face-btn active" data-target-face="U">U</button>
+            <button class="target-face-btn" data-target-face="R">R</button>
+            <button class="target-face-btn" data-target-face="F">F</button>
+            <button class="target-face-btn" data-target-face="D">D</button>
+            <button class="target-face-btn" data-target-face="L">L</button>
+            <button class="target-face-btn" data-target-face="B">B</button>
+          </div>
+
+          <h4 class="section-spacer">Last Scan Result</h4>
+          <p class="muted">These are the guessed sticker colors from the latest capture.</p>
+
+          <div class="camera-result-grid" id="cameraResultGrid">
+            <div class="camera-result-cell sticker-X">?</div>
+            <div class="camera-result-cell sticker-X">?</div>
+            <div class="camera-result-cell sticker-X">?</div>
+            <div class="camera-result-cell sticker-X">?</div>
+            <div class="camera-result-cell sticker-X">?</div>
+            <div class="camera-result-cell sticker-X">?</div>
+            <div class="camera-result-cell sticker-X">?</div>
+            <div class="camera-result-cell sticker-X">?</div>
+            <div class="camera-result-cell sticker-X">?</div>
+          </div>
+
+          <div class="input-actions">
+            <button id="applyScanBtn" class="btn btn-primary btn-small">Apply Scan To Face</button>
+          </div>
+
+          <div class="validation-box" id="cameraDebugBox">
+            No capture yet.
           </div>
         </aside>
       </div>
@@ -173,34 +234,13 @@
             </div>
 
             <div class="palette-buttons">
-              <button class="color-pick active" data-color="U" title="White">
-                <span class="swatch swatch-u"></span>
-                <span>White</span>
-              </button>
-              <button class="color-pick" data-color="R" title="Red">
-                <span class="swatch swatch-r"></span>
-                <span>Red</span>
-              </button>
-              <button class="color-pick" data-color="F" title="Green">
-                <span class="swatch swatch-f"></span>
-                <span>Green</span>
-              </button>
-              <button class="color-pick" data-color="D" title="Yellow">
-                <span class="swatch swatch-d"></span>
-                <span>Yellow</span>
-              </button>
-              <button class="color-pick" data-color="L" title="Orange">
-                <span class="swatch swatch-l"></span>
-                <span>Orange</span>
-              </button>
-              <button class="color-pick" data-color="B" title="Blue">
-                <span class="swatch swatch-b"></span>
-                <span>Blue</span>
-              </button>
-              <button class="color-pick" data-color="X" title="Empty">
-                <span class="swatch swatch-x"></span>
-                <span>Empty</span>
-              </button>
+              <button class="color-pick active" data-color="U"><span class="swatch swatch-u"></span><span>White</span></button>
+              <button class="color-pick" data-color="R"><span class="swatch swatch-r"></span><span>Red</span></button>
+              <button class="color-pick" data-color="F"><span class="swatch swatch-f"></span><span>Green</span></button>
+              <button class="color-pick" data-color="D"><span class="swatch swatch-d"></span><span>Yellow</span></button>
+              <button class="color-pick" data-color="L"><span class="swatch swatch-l"></span><span>Orange</span></button>
+              <button class="color-pick" data-color="B"><span class="swatch swatch-b"></span><span>Blue</span></button>
+              <button class="color-pick" data-color="X"><span class="swatch swatch-x"></span><span>Empty</span></button>
             </div>
           </div>
 
@@ -239,17 +279,14 @@
                 <div class="face-label">L / Orange</div>
                 <div class="face-grid" id="face-L"></div>
               </div>
-
               <div class="face-card" data-face="F">
                 <div class="face-label">F / Green</div>
                 <div class="face-grid" id="face-F"></div>
               </div>
-
               <div class="face-card" data-face="R">
                 <div class="face-label">R / Red</div>
                 <div class="face-grid" id="face-R"></div>
               </div>
-
               <div class="face-card" data-face="B">
                 <div class="face-label">B / Blue</div>
                 <div class="face-grid" id="face-B"></div>
@@ -267,16 +304,12 @@
 
         <aside class="input-side-card">
           <h4>Validation</h4>
-          <p class="muted">
-            This version checks counts, locked centers, parser acceptance, and solvability.
-          </p>
+          <p class="muted">This version checks counts, locked centers, parser acceptance, and solvability.</p>
 
-          <div class="validation-box" id="validationBox">
-            No validation run yet.
-          </div>
+          <div class="validation-box" id="validationBox">No validation run yet.</div>
 
           <h4 class="section-spacer">Live Color Counts</h4>
-          <div class="counts-grid" id="countsGrid">
+          <div class="counts-grid">
             <div class="count-chip count-u">U: 1 / 9</div>
             <div class="count-chip count-r">R: 1 / 9</div>
             <div class="count-chip count-f">F: 1 / 9</div>
@@ -287,48 +320,11 @@
           </div>
 
           <h4 class="section-spacer">Current Facelet String</h4>
-          <p class="muted">
-            This is the internal cube state sent to the solver.
-          </p>
+          <p class="muted">This is the internal cube state sent to the solver.</p>
 
-          <div class="sequence-box small-box" id="faceletBox">
-            Not generated yet.
-          </div>
-
-          <div class="helper-card">
-            <h5>Input order</h5>
-            <ul>
-              <li>Top: U</li>
-              <li>Middle: L, F, R, B</li>
-              <li>Bottom: D</li>
-              <li>Centers cannot be changed</li>
-            </ul>
-          </div>
+          <div class="sequence-box small-box" id="faceletBox">Not generated yet.</div>
         </aside>
       </div>
-    </section>
-
-    <section class="info-grid">
-      <article class="info-card">
-        <h3>Live Color Counts</h3>
-        <p>
-          The input sidebar now updates counts immediately so color mistakes are easier to spot.
-        </p>
-      </article>
-
-      <article class="info-card">
-        <h3>Deeper Validation</h3>
-        <p>
-          Validation now checks not only counts, but also solver acceptance and solvability.
-        </p>
-      </article>
-
-      <article class="info-card">
-        <h3>Better Editing Flow</h3>
-        <p>
-          Painting, clearing, and reading the current state are now more guided and easier to use.
-        </p>
-      </article>
     </section>
 
     <section id="roadmap" class="roadmap">
@@ -338,51 +334,18 @@
       </div>
 
       <div class="roadmap-list">
-        <div class="roadmap-item done">
-          <span class="step-badge">01</span>
-          <div>
-            <h4>Brand + GitHub setup</h4>
-            <p>Repository, GitHub Pages structure, polished landing page.</p>
-          </div>
-        </div>
-
-        <div class="roadmap-item done">
-          <span class="step-badge">02</span>
-          <div>
-            <h4>Animated cube integration</h4>
-            <p>Real interactive viewer and first controls are in place.</p>
-          </div>
-        </div>
-
-        <div class="roadmap-item done">
-          <span class="step-badge">03</span>
-          <div>
-            <h4>Scramble + solve flow</h4>
-            <p>Generated scramble solving and animated solution playback.</p>
-          </div>
-        </div>
-
-        <div class="roadmap-item done">
-          <span class="step-badge">04</span>
-          <div>
-            <h4>Manual editor</h4>
-            <p>Sticker painting, validation, facelet conversion, and solving entered cubes.</p>
-          </div>
-        </div>
-
-        <div class="roadmap-item active">
-          <span class="step-badge">05</span>
-          <div>
-            <h4>Validation + UX refinement</h4>
-            <p>Live counts, deeper validation, and better manual input guidance.</p>
-          </div>
-        </div>
+        <div class="roadmap-item done"><span class="step-badge">01</span><div><h4>Brand + GitHub setup</h4><p>Repository, GitHub Pages structure, polished landing page.</p></div></div>
+        <div class="roadmap-item done"><span class="step-badge">02</span><div><h4>Animated cube integration</h4><p>Real interactive viewer and first controls are in place.</p></div></div>
+        <div class="roadmap-item done"><span class="step-badge">03</span><div><h4>Scramble + solve flow</h4><p>Generated scramble solving and animated solution playback.</p></div></div>
+        <div class="roadmap-item done"><span class="step-badge">04</span><div><h4>Manual editor</h4><p>Sticker painting, validation, facelet conversion, and solving entered cubes.</p></div></div>
+        <div class="roadmap-item done"><span class="step-badge">05</span><div><h4>Validation + UX refinement</h4><p>Live counts, deeper validation, and better manual input guidance.</p></div></div>
+        <div class="roadmap-item active"><span class="step-badge">06</span><div><h4>Camera-assisted face capture</h4><p>Open camera, sample a face, and write guesses into the editor.</p></div></div>
       </div>
     </section>
 
     <footer class="footer">
       <p>© 2026 CubeCraft by Jacob</p>
-      <p id="footerMessage">Validation and UX refinement ready.</p>
+      <p id="footerMessage">Camera assist ready.</p>
     </footer>
   </div>
 
