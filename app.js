@@ -64,16 +64,6 @@ const COLOR_LABELS = {
   X: "Empty (X)"
 };
 
-const COLOR_RGB = {
-  U: [245, 247, 250],
-  R: [255, 90, 90],
-  F: [68, 210, 124],
-  D: [255, 216, 77],
-  L: [255, 154, 60],
-  B: [76, 162, 255]
-};
-
-/* ---------- State ---------- */
 let selectedColor = "U";
 let targetFace = "U";
 let currentScramble = "";
@@ -119,7 +109,6 @@ function scrollToSection(id) {
 
 function setBanner(kind, message) {
   if (!validationBanner) return;
-
   validationBanner.className = "validation-banner";
   validationBanner.classList.add(
     kind === "success"
@@ -135,14 +124,11 @@ function setBanner(kind, message) {
 
 function setButtonBusy(button, busyText) {
   if (!button) return () => {};
-
   const oldText = button.textContent;
   const oldDisabled = button.disabled;
-
   button.disabled = true;
   button.textContent = busyText;
   button.style.opacity = "0.7";
-
   return () => {
     button.disabled = oldDisabled;
     button.textContent = oldText;
@@ -172,20 +158,15 @@ function resetAll() {
   currentScramble = "";
   currentSolution = "";
   currentCube = null;
-
   if (scrambleBox) scrambleBox.textContent = "No scramble loaded yet.";
   if (solutionBox) solutionBox.textContent = "No solution yet.";
   if (modeStatus) modeStatus.textContent = "Generated scramble solve";
-
   setSolvedView();
   setStatus("Cube reset to solved state.");
 }
 
 async function ensureSolverReady() {
-  if (!Cube) {
-    throw new Error("cube.js library did not load.");
-  }
-
+  if (!Cube) throw new Error("cube.js library did not load.");
   if (solverInitialized) return;
 
   if (solverStatus) solverStatus.textContent = "Initializing...";
@@ -206,7 +187,6 @@ async function ensureSolverReady() {
 /* ---------- Scramble Solver ---------- */
 async function generateScramble() {
   scrollToSection("solver");
-
   try {
     setStatus("Generating random 3×3 scramble...");
     const scramble = await randomScrambleForEvent("333");
@@ -232,7 +212,6 @@ async function generateScramble() {
 
 async function solveCurrentScramble() {
   scrollToSection("solver");
-
   if (!currentCube || !currentScramble) {
     setStatus("Generate a scramble first.");
     return;
@@ -240,7 +219,6 @@ async function solveCurrentScramble() {
 
   try {
     await ensureSolverReady();
-
     if (solverStatus) solverStatus.textContent = "Solving...";
     setStatus("Computing solution for generated scramble...");
 
@@ -248,13 +226,11 @@ async function solveCurrentScramble() {
     const solution = cubeToSolve.solve();
 
     currentSolution = solution;
-
     if (solutionBox) solutionBox.textContent = solution;
     setSolutionPlayback(currentScramble, solution);
 
     if (solverStatus) solverStatus.textContent = "Solved";
     if (modeStatus) modeStatus.textContent = "Generated scramble solve";
-
     setStatus("Solution computed and loaded into animated playback.");
   } catch (error) {
     console.error(error);
@@ -281,7 +257,6 @@ function renderFace(face) {
   const stickers = container.querySelectorAll(".sticker");
   stickers.forEach((sticker, idx) => {
     const value = faceState[face][idx] || "X";
-
     sticker.className = "sticker";
     sticker.classList.add(getStickerClass(value));
 
@@ -298,19 +273,16 @@ function renderFace(face) {
 
 function getColorCounts() {
   const counts = { U: 0, R: 0, F: 0, D: 0, L: 0, B: 0, X: 0 };
-
   for (const face of FACE_ORDER) {
     for (const value of faceState[face]) {
       counts[value] = (counts[value] || 0) + 1;
     }
   }
-
   return counts;
 }
 
 function updateCountsUI() {
   const counts = getColorCounts();
-
   const elU = document.querySelector(".count-u");
   const elR = document.querySelector(".count-r");
   const elF = document.querySelector(".count-f");
@@ -333,10 +305,7 @@ function getFaceletString() {
 }
 
 function renderAllFaces() {
-  for (const face of NET_FACES) {
-    renderFace(face);
-  }
-
+  for (const face of NET_FACES) renderFace(face);
   if (faceletBox) faceletBox.textContent = getFaceletString();
   updateCountsUI();
 }
@@ -344,7 +313,6 @@ function renderAllFaces() {
 function buildFaceGrid(face) {
   const container = document.getElementById(`face-${face}`);
   if (!container) return;
-
   container.innerHTML = "";
 
   for (let i = 0; i < 9; i++) {
@@ -364,27 +332,22 @@ function buildFaceGrid(face) {
 }
 
 function createFaceGrids() {
-  for (const face of NET_FACES) {
-    buildFaceGrid(face);
-  }
+  for (const face of NET_FACES) buildFaceGrid(face);
   renderAllFaces();
 }
 
 function liveInputHealth() {
   const counts = getColorCounts();
-
   if (counts.X > 0) {
     setBanner("warning", `Input incomplete: ${counts.X} sticker(s) still empty.`);
     return;
   }
-
   for (const color of FACE_ORDER) {
     if (counts[color] !== 9) {
       setBanner("danger", `Color counts are off: ${color} has ${counts[color]} sticker(s).`);
       return;
     }
   }
-
   setBanner("success", "Color counts look complete. Run Validate for full checking.");
 }
 
@@ -396,10 +359,8 @@ function clearNonCenters() {
   }
 
   renderAllFaces();
-
   if (validationBox) validationBox.textContent = "Cleared all non-center stickers.";
   if (inputStatus) inputStatus.textContent = "Cleared";
-
   setBanner("warning", "Input cleared. Paint the cube state again.");
 }
 
@@ -411,20 +372,16 @@ function fillSolved() {
   }
 
   renderAllFaces();
-
   if (validationBox) validationBox.textContent = "Filled with solved cube colors.";
   if (inputStatus) inputStatus.textContent = "Solved template loaded";
-
   setBanner("success", "Solved template loaded.");
 }
 
 function setSelectedColor(colorCode) {
   selectedColor = colorCode;
-
   colorPickButtons.forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.color === colorCode);
   });
-
   if (selectedPaintLabel) {
     selectedPaintLabel.textContent = COLOR_LABELS[colorCode] || colorCode;
   }
@@ -440,14 +397,9 @@ function validateFaceCounts() {
     }
   }
 
-  if (counts.X > 0) {
-    issues.push(`There are ${counts.X} unfilled stickers.`);
-  }
-
+  if (counts.X > 0) issues.push(`There are ${counts.X} unfilled stickers.`);
   for (const color of FACE_ORDER) {
-    if (counts[color] !== 9) {
-      issues.push(`${color} has ${counts[color]} stickers instead of 9.`);
-    }
+    if (counts[color] !== 9) issues.push(`${color} has ${counts[color]} stickers instead of 9.`);
   }
 
   return { ok: issues.length === 0, issues };
@@ -456,7 +408,6 @@ function validateFaceCounts() {
 async function validateManualInput() {
   const facelet = getFaceletString();
   if (faceletBox) faceletBox.textContent = facelet;
-
   const basic = validateFaceCounts();
 
   if (!basic.ok) {
@@ -490,21 +441,17 @@ async function validateManualInput() {
 
     if (inputStatus) inputStatus.textContent = "Validation passed";
     setBanner("success", "Validation passed. This cube state is ready to solve.");
-
     return { ok: true, facelet };
   } catch (error) {
     console.error(error);
-
     if (validationBox) {
       validationBox.textContent =
         "Validation failed:\n" +
         "• Counts may be correct, but the solver rejected this state\n" +
         "• The arrangement may be impossible or inconsistent";
     }
-
     if (inputStatus) inputStatus.textContent = "Validation failed";
     setBanner("danger", "The state is not solver-valid. Check sticker placement again.");
-
     return { ok: false, facelet };
   }
 }
@@ -521,7 +468,6 @@ async function solveManualInput() {
     }
 
     await ensureSolverReady();
-
     if (solverStatus) solverStatus.textContent = "Solving...";
     setStatus("Computing solution for entered cube...");
 
@@ -529,7 +475,6 @@ async function solveManualInput() {
     const solution = cube.solve();
 
     currentSolution = solution;
-
     if (scrambleBox) scrambleBox.textContent = "Manual cube state loaded";
     if (solutionBox) solutionBox.textContent = solution || "(already solved)";
     if (modeStatus) modeStatus.textContent = "Manual entered cube solve";
@@ -556,7 +501,6 @@ async function solveManualInput() {
 /* ---------- Camera ---------- */
 function setTargetFace(face) {
   targetFace = face;
-
   targetFaceButtons.forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.targetFace === face);
   });
@@ -564,7 +508,6 @@ function setTargetFace(face) {
 
 function renderCameraResult(colors) {
   if (!cameraResultGrid) return;
-
   const cells = cameraResultGrid.querySelectorAll(".camera-result-cell");
   cells.forEach((cell, i) => {
     const value = colors[i] || "X";
@@ -575,32 +518,104 @@ function renderCameraResult(colors) {
   });
 }
 
-function colorDistance(a, b) {
-  const dr = a[0] - b[0];
-  const dg = a[1] - b[1];
-  const db = a[2] - b[2];
-  return Math.sqrt(dr * dr + dg * dg + db * db);
+/* Better color classification */
+function rgbToHsv(r, g, b) {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const d = max - min;
+
+  let h = 0;
+  const s = max === 0 ? 0 : d / max;
+  const v = max;
+
+  if (d !== 0) {
+    switch (max) {
+      case r:
+        h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+        break;
+      case g:
+        h = ((b - r) / d + 2) / 6;
+        break;
+      case b:
+        h = ((r - g) / d + 4) / 6;
+        break;
+    }
+  }
+
+  return {
+    h: h * 360,
+    s,
+    v
+  };
 }
 
-function nearestCubeColor(rgb) {
+function classifyColorSmart(rgb) {
+  const [r, g, b] = rgb;
+  const hsv = rgbToHsv(r, g, b);
+
+  /* white */
+  if (hsv.v > 0.72 && hsv.s < 0.20) {
+    return "U";
+  }
+
+  /* yellow */
+  if (hsv.h >= 40 && hsv.h <= 75 && hsv.s > 0.25 && hsv.v > 0.45) {
+    return "D";
+  }
+
+  /* green */
+  if (hsv.h >= 75 && hsv.h <= 165 && hsv.s > 0.22) {
+    return "F";
+  }
+
+  /* blue */
+  if (hsv.h >= 180 && hsv.h <= 260 && hsv.s > 0.22) {
+    return "B";
+  }
+
+  /* red */
+  if ((hsv.h >= 0 && hsv.h <= 18) || (hsv.h >= 340 && hsv.h <= 360)) {
+    return "R";
+  }
+
+  /* orange */
+  if (hsv.h > 18 && hsv.h < 40) {
+    return "L";
+  }
+
+  /* fallback nearest RGB */
   let best = "U";
   let bestDist = Number.POSITIVE_INFINITY;
 
-  for (const [code, ref] of Object.entries(COLOR_RGB)) {
-    const dist = colorDistance(rgb, ref);
+  for (const [code, ref] of Object.entries({
+    U: [245, 247, 250],
+    R: [255, 90, 90],
+    F: [68, 210, 124],
+    D: [255, 216, 77],
+    L: [255, 154, 60],
+    B: [76, 162, 255]
+  })) {
+    const dr = r - ref[0];
+    const dg = g - ref[1];
+    const db = b - ref[2];
+    const dist = dr * dr + dg * dg + db * db;
     if (dist < bestDist) {
       bestDist = dist;
       best = code;
     }
   }
 
-  return { code: best, distance: bestDist };
+  return best;
 }
 
 async function openCamera() {
   console.log("Open Camera clicked");
 
-  if (cameraStatus) cameraStatus.textContent = "Open Camera clicked...";
+  if (cameraStatus) cameraStatus.textContent = "Opening camera...";
   if (cameraDebugBox) cameraDebugBox.textContent = "Trying to access camera...";
 
   const restore = setButtonBusy(openCameraBtn, "Opening...");
@@ -632,7 +647,7 @@ async function openCamera() {
       console.error("cameraVideo.play failed:", playError);
     }
 
-    if (cameraStatus) cameraStatus.textContent = "Camera opened successfully.";
+    if (cameraStatus) cameraStatus.textContent = "Camera opened successfully. Hold one face centered and straight.";
     if (cameraDebugBox) cameraDebugBox.textContent = "Camera stream started.";
   } catch (error) {
     console.error("openCamera failed:", error);
@@ -652,56 +667,65 @@ function closeCamera() {
     cameraStream = null;
   }
 
-  if (cameraVideo) {
-    cameraVideo.srcObject = null;
-  }
-
+  if (cameraVideo) cameraVideo.srcObject = null;
   if (cameraStatus) cameraStatus.textContent = "Camera is closed.";
   if (cameraDebugBox) cameraDebugBox.textContent = "No capture yet.";
 }
 
 function sampleGridColors(ctx, width, height) {
   const results = [];
-  const gridSize = Math.min(width, height) * 0.52;
+
+  const gridSize = Math.min(width, height) * 0.48;
   const startX = (width - gridSize) / 2;
   const startY = (height - gridSize) / 2;
   const cell = gridSize / 3;
-  const patch = cell * 0.28;
+  const patch = cell * 0.18;
 
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
       const centerX = startX + (col + 0.5) * cell;
       const centerY = startY + (row + 0.5) * cell;
-      const x = Math.max(0, Math.floor(centerX - patch / 2));
-      const y = Math.max(0, Math.floor(centerY - patch / 2));
-      const w = Math.max(1, Math.floor(patch));
-      const h = Math.max(1, Math.floor(patch));
 
-      const imageData = ctx.getImageData(x, y, w, h).data;
+      const sampleOffsets = [
+        [0, 0],
+        [-patch * 0.35, 0],
+        [patch * 0.35, 0],
+        [0, -patch * 0.35],
+        [0, patch * 0.35]
+      ];
 
-      let r = 0;
-      let g = 0;
-      let b = 0;
-      let count = 0;
+      let allR = 0;
+      let allG = 0;
+      let allB = 0;
+      let totalPixels = 0;
 
-      for (let i = 0; i < imageData.length; i += 4) {
-        r += imageData[i];
-        g += imageData[i + 1];
-        b += imageData[i + 2];
-        count++;
+      for (const [ox, oy] of sampleOffsets) {
+        const x = Math.max(0, Math.floor(centerX + ox - patch / 2));
+        const y = Math.max(0, Math.floor(centerY + oy - patch / 2));
+        const w = Math.max(1, Math.floor(patch));
+        const h = Math.max(1, Math.floor(patch));
+
+        const imageData = ctx.getImageData(x, y, w, h).data;
+
+        for (let i = 0; i < imageData.length; i += 4) {
+          allR += imageData[i];
+          allG += imageData[i + 1];
+          allB += imageData[i + 2];
+          totalPixels++;
+        }
       }
 
       const avg = [
-        Math.round(r / count),
-        Math.round(g / count),
-        Math.round(b / count)
+        Math.round(allR / totalPixels),
+        Math.round(allG / totalPixels),
+        Math.round(allB / totalPixels)
       ];
 
-      const guess = nearestCubeColor(avg);
+      const code = classifyColorSmart(avg);
+
       results.push({
         rgb: avg,
-        code: guess.code,
-        distance: Math.round(guess.distance)
+        code
       });
     }
   }
@@ -721,10 +745,10 @@ function captureFace() {
     return;
   }
 
+  if (!captureCanvas) return;
+
   const width = cameraVideo.videoWidth;
   const height = cameraVideo.videoHeight;
-
-  if (!captureCanvas) return;
 
   captureCanvas.width = width;
   captureCanvas.height = height;
@@ -741,11 +765,12 @@ function captureFace() {
   renderCameraResult(guessed);
 
   const lines = samples.map((s, i) => {
-    return `${i + 1}: rgb(${s.rgb.join(", ")}) -> ${guessed[i]} (distance ${s.distance})`;
+    const hsv = rgbToHsv(s.rgb[0], s.rgb[1], s.rgb[2]);
+    return `${i + 1}: rgb(${s.rgb.join(", ")}) -> ${guessed[i]} | h=${hsv.h.toFixed(1)} s=${hsv.s.toFixed(2)} v=${hsv.v.toFixed(2)}`;
   });
 
   if (cameraStatus) {
-    cameraStatus.textContent = `Face captured for target ${targetFace}. Review and apply if it looks correct.`;
+    cameraStatus.textContent = `Face captured for target ${targetFace}. Check result and apply if it looks right.`;
   }
 
   if (cameraDebugBox) {
@@ -767,13 +792,11 @@ function applyScanToFace() {
   }
 
   renderFace(targetFace);
-
   if (faceletBox) faceletBox.textContent = getFaceletString();
   updateCountsUI();
 
   if (inputStatus) inputStatus.textContent = `Applied scanned colors to face ${targetFace}`;
-  setBanner("warning", `Scan applied to face ${targetFace}. Review and correct any mistakes, then validate.`);
-
+  setBanner("warning", `Scan applied to face ${targetFace}. Review and correct mistakes, then validate.`);
   if (cameraStatus) cameraStatus.textContent = `Scan applied to face ${targetFace}.`;
 
   scrollToSection("input");
