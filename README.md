@@ -6,20 +6,25 @@ CubeCraft by Jacob is a modern Rubik’s Cube solver web app designed for GitHub
 This version includes:
 - branded landing page
 - real interactive 3D cube viewer
-- scramble button
-- demo algorithm loading
+- random scramble generation
+- real solver initialization
+- computed solution playback
 - reset to solved state
 - polished dark UI
 
+## Current solve mode
+This version solves generated 3×3 scrambles inside the browser.
+
 ## Next steps
-1. Add real solver integration
-2. Add manual cube state entry
-3. Add validation flow
-4. Add camera-assisted face scanning
+1. Add manual cube-state entry
+2. Add validation flow
+3. Add camera-assisted face scanning
+4. Add guided solving UX
 
 ## Tech direction
 - HTML
 - CSS
 - JavaScript
 - cubing.js viewer
+- cube.js solver
 - GitHub Pages hosting
