@@ -99,6 +99,19 @@ function setBanner(kind, message) {
   validationBanner.textContent = message;
 }
 
+function setButtonBusy(button, busyText) {
+  if (!button) return () => {};
+  const oldText = button.textContent;
+  button.disabled = true;
+  button.textContent = busyText;
+  button.style.opacity = "0.7";
+  return () => {
+    button.disabled = false;
+    button.textContent = oldText;
+    button.style.opacity = "";
+  };
+}
+
 function setSolvedView() {
   player.experimentalSetupAlg = "";
   player.experimentalSetupAnchor = "end";
@@ -441,25 +454,33 @@ async function validateManualInput() {
       "Validation failed:\n" +
       basic.issues.map((x) => `• ${x}`).join("\n");
     inputStatus.textContent = "Validation failed";
-    setBanner("danger", "Validation failed. Fix the highlighted count or completeness issues.");
+    setBanner("danger", "Validation failed. Fix the count or completeness issues.");
     return { ok: false, facelet };
   }
 
   try {
-    const parsedCube = Cube.fromString(facelet);
+    validationBox.textContent = "Running deep validation...";
+    inputStatus.textContent = "Validating...";
+    setBanner("warning", "Checking solver validity...");
+
     await ensureSolverReady();
-    parsedCube.solve();
+
+    const parsedCube = Cube.fromString(facelet);
+    const testSolution = parsedCube.solve();
 
     validationBox.textContent =
       "Validation passed.\n" +
       "• Counts are correct\n" +
       "• Centers are correct\n" +
       "• Solver accepted the facelet string\n" +
-      "• State appears solvable";
+      `• State appears solvable\n` +
+      `• Preview solution: ${testSolution || "(already solved)"}`;
+
     inputStatus.textContent = "Validation passed";
     setBanner("success", "Validation passed. This cube state is ready to solve.");
     return { ok: true, facelet };
   } catch (error) {
+    console.error(error);
     validationBox.textContent =
       "Validation failed:\n" +
       "• Counts may be correct, but the solver rejected this state\n" +
@@ -473,13 +494,14 @@ async function validateManualInput() {
 async function solveManualInput() {
   scrollToSection("solver");
 
-  const result = await validateManualInput();
-  if (!result.ok) {
-    setStatus("Manual input is not valid yet.");
-    return;
-  }
-
+  const restoreButton = setButtonBusy(solveInputBtn, "Solving...");
   try {
+    const result = await validateManualInput();
+    if (!result.ok) {
+      setStatus("Manual input is not valid yet.");
+      return;
+    }
+
     await ensureSolverReady();
     solverStatus.textContent = "Solving...";
     setStatus("Computing solution for entered cube...");
@@ -499,12 +521,15 @@ async function solveManualInput() {
 
     solverStatus.textContent = "Solved";
     setStatus("Entered cube solved. Solution loaded into the viewer.");
+    setBanner("success", "Solve completed.");
   } catch (error) {
     console.error(error);
     solverStatus.textContent = "Error";
     inputStatus.textContent = "Solver error";
     setStatus("Could not solve the entered cube state.");
     setBanner("danger", "Solver failed on this state.");
+  } finally {
+    restoreButton();
   }
 }
 
@@ -517,7 +542,16 @@ colorPickButtons.forEach((btn) => {
 scrambleBtn?.addEventListener("click", generateScramble);
 solveBtn?.addEventListener("click", solveCurrentScramble);
 resetBtn?.addEventListener("click", resetAll);
-validateBtn?.addEventListener("click", validateManualInput);
+
+validateBtn?.addEventListener("click", async () => {
+  const restoreButton = setButtonBusy(validateBtn, "Validating...");
+  try {
+    await validateManualInput();
+  } finally {
+    restoreButton();
+  }
+});
+
 solveInputBtn?.addEventListener("click", solveManualInput);
 fillSolvedBtn?.addEventListener("click", fillSolved);
 clearInputBtn?.addEventListener("click", clearNonCenters);
