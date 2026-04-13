@@ -12,7 +12,9 @@ const modeStatus = document.getElementById("modeStatus");
 const playerStatus = document.getElementById("playerStatus");
 const footerMessage = document.getElementById("footerMessage");
 const validationBox = document.getElementById("validationBox");
+const validationBanner = document.getElementById("validationBanner");
 const faceletBox = document.getElementById("faceletBox");
+const selectedPaintLabel = document.getElementById("selectedPaintLabel");
 
 const scrambleBtn = document.getElementById("scrambleBtn");
 const solveBtn = document.getElementById("solveBtn");
@@ -35,6 +37,16 @@ const CENTER_COLORS = {
   D: "D",
   L: "L",
   B: "B"
+};
+
+const COLOR_LABELS = {
+  U: "White (U)",
+  R: "Red (R)",
+  F: "Green (F)",
+  D: "Yellow (D)",
+  L: "Orange (L)",
+  B: "Blue (B)",
+  X: "Empty (X)"
 };
 
 let selectedColor = "U";
@@ -71,6 +83,20 @@ function setStatus(message) {
 
 function scrollToSection(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+}
+
+function setBanner(kind, message) {
+  validationBanner.className = "validation-banner";
+  if (kind === "success") {
+    validationBanner.classList.add("validation-success");
+  } else if (kind === "warning") {
+    validationBanner.classList.add("validation-warning");
+  } else if (kind === "danger") {
+    validationBanner.classList.add("validation-danger");
+  } else {
+    validationBanner.classList.add("validation-neutral");
+  }
+  validationBanner.textContent = message;
 }
 
 function setSolvedView() {
@@ -211,11 +237,43 @@ function renderFace(face) {
   });
 }
 
+function getColorCounts() {
+  const counts = { U: 0, R: 0, F: 0, D: 0, L: 0, B: 0, X: 0 };
+  for (const face of FACE_ORDER) {
+    for (const value of faceState[face]) {
+      counts[value] = (counts[value] || 0) + 1;
+    }
+  }
+  return counts;
+}
+
+function updateCountsUI() {
+  const counts = getColorCounts();
+  const map = {
+    U: document.querySelector(".count-u"),
+    R: document.querySelector(".count-r"),
+    F: document.querySelector(".count-f"),
+    D: document.querySelector(".count-d"),
+    L: document.querySelector(".count-l"),
+    B: document.querySelector(".count-b"),
+    X: document.querySelector(".count-x")
+  };
+
+  map.U.textContent = `U: ${counts.U} / 9`;
+  map.R.textContent = `R: ${counts.R} / 9`;
+  map.F.textContent = `F: ${counts.F} / 9`;
+  map.D.textContent = `D: ${counts.D} / 9`;
+  map.L.textContent = `L: ${counts.L} / 9`;
+  map.B.textContent = `B: ${counts.B} / 9`;
+  map.X.textContent = `X: ${counts.X}`;
+}
+
 function renderAllFaces() {
   for (const face of NET_FACES) {
     renderFace(face);
   }
   faceletBox.textContent = getFaceletString();
+  updateCountsUI();
 }
 
 function buildFaceGrid(face) {
@@ -247,14 +305,33 @@ function createFaceGrids() {
   renderAllFaces();
 }
 
-function handleStickerClick(face, index) {
+function liveInputHealth() {
+  const counts = getColorCounts();
+  if (counts.X > 0) {
+    setBanner("warning", `Input incomplete: ${counts.X} sticker(s) still empty.`);
+    return;
+  }
+
+  for (const color of FACE_ORDER) {
+    if (counts[color] !== 9) {
+      setBanner("danger", `Color counts are off: ${color} has ${counts[color]} sticker(s).`);
+      return;
+    }
+  }
+
+  setBanner("success", "Color counts look complete. Run Validate for full checking.");
+}
+
+function handleStickerClick(face, index, colorToApply = selectedColor) {
   if (index === 4) return;
 
-  faceState[face][index] = selectedColor;
+  faceState[face][index] = colorToApply;
   renderFace(face);
   faceletBox.textContent = getFaceletString();
-  inputStatus.textContent = `Applied ${selectedColor} to ${face}${index + 1}`;
+  updateCountsUI();
+  inputStatus.textContent = `Applied ${colorToApply} to ${face}${index + 1}`;
   validationBox.textContent = "Input updated. Run Validate to check the current state.";
+  liveInputHealth();
 }
 
 function wireFaceGridClicks() {
@@ -270,7 +347,20 @@ function wireFaceGridClicks() {
       const clickedIndex = Number(target.dataset.index);
 
       if (!clickedFace || Number.isNaN(clickedIndex)) return;
-      handleStickerClick(clickedFace, clickedIndex);
+      handleStickerClick(clickedFace, clickedIndex, selectedColor);
+    });
+
+    container.addEventListener("contextmenu", (event) => {
+      const target = event.target.closest(".sticker");
+      if (!target) return;
+
+      event.preventDefault();
+
+      const clickedFace = target.dataset.face;
+      const clickedIndex = Number(target.dataset.index);
+
+      if (!clickedFace || Number.isNaN(clickedIndex) || clickedIndex === 4) return;
+      handleStickerClick(clickedFace, clickedIndex, "X");
     });
   }
 }
@@ -285,6 +375,7 @@ function clearNonCenters() {
   renderAllFaces();
   validationBox.textContent = "Cleared all non-center stickers.";
   inputStatus.textContent = "Cleared";
+  setBanner("warning", "Input cleared. Paint the cube state again.");
 }
 
 function fillSolved() {
@@ -297,6 +388,7 @@ function fillSolved() {
   renderAllFaces();
   validationBox.textContent = "Filled with solved cube colors.";
   inputStatus.textContent = "Solved template loaded";
+  setBanner("success", "Solved template loaded.");
 }
 
 function setSelectedColor(colorCode) {
@@ -304,27 +396,22 @@ function setSelectedColor(colorCode) {
   colorPickButtons.forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.color === colorCode);
   });
+  selectedPaintLabel.textContent = COLOR_LABELS[colorCode] || colorCode;
 }
 
 function getFaceletString() {
   return FACE_ORDER.map((face) => faceState[face].join("")).join("");
 }
 
-function getColorCounts() {
-  const counts = { U: 0, R: 0, F: 0, D: 0, L: 0, B: 0, X: 0 };
-
-  for (const face of FACE_ORDER) {
-    for (const value of faceState[face]) {
-      counts[value] = (counts[value] || 0) + 1;
-    }
-  }
-
-  return counts;
-}
-
 function validateFaceCounts() {
   const counts = getColorCounts();
   const issues = [];
+
+  for (const face of FACE_ORDER) {
+    if (faceState[face][4] !== CENTER_COLORS[face]) {
+      issues.push(`Center of ${face} is invalid.`);
+    }
+  }
 
   if (counts.X > 0) {
     issues.push(`There are ${counts.X} unfilled stickers.`);
@@ -343,7 +430,7 @@ function validateFaceCounts() {
   };
 }
 
-function validateManualInput() {
+async function validateManualInput() {
   const facelet = getFaceletString();
   faceletBox.textContent = facelet;
 
@@ -354,21 +441,31 @@ function validateManualInput() {
       "Validation failed:\n" +
       basic.issues.map((x) => `• ${x}`).join("\n");
     inputStatus.textContent = "Validation failed";
+    setBanner("danger", "Validation failed. Fix the highlighted count or completeness issues.");
     return { ok: false, facelet };
   }
 
   try {
-    Cube.fromString(facelet);
+    const parsedCube = Cube.fromString(facelet);
+    await ensureSolverReady();
+    parsedCube.solve();
+
     validationBox.textContent =
-      "Basic validation passed.\n" +
-      "Sticker counts are correct and the solver accepted the facelet format.";
+      "Validation passed.\n" +
+      "• Counts are correct\n" +
+      "• Centers are correct\n" +
+      "• Solver accepted the facelet string\n" +
+      "• State appears solvable";
     inputStatus.textContent = "Validation passed";
+    setBanner("success", "Validation passed. This cube state is ready to solve.");
     return { ok: true, facelet };
   } catch (error) {
     validationBox.textContent =
       "Validation failed:\n" +
-      "The solver rejected this cube state. It may be impossible or inconsistent.";
+      "• Counts may be correct, but the solver rejected this state\n" +
+      "• The arrangement may be impossible or inconsistent";
     inputStatus.textContent = "Validation failed";
+    setBanner("danger", "The state is not solver-valid. Check sticker placement again.");
     return { ok: false, facelet };
   }
 }
@@ -376,7 +473,7 @@ function validateManualInput() {
 async function solveManualInput() {
   scrollToSection("solver");
 
-  const result = validateManualInput();
+  const result = await validateManualInput();
   if (!result.ok) {
     setStatus("Manual input is not valid yet.");
     return;
@@ -407,6 +504,7 @@ async function solveManualInput() {
     solverStatus.textContent = "Error";
     inputStatus.textContent = "Solver error";
     setStatus("Could not solve the entered cube state.");
+    setBanner("danger", "Solver failed on this state.");
   }
 }
 
@@ -444,3 +542,5 @@ resetAll();
 validationBox.textContent = "No validation run yet.";
 faceletBox.textContent = getFaceletString();
 inputStatus.textContent = "Waiting for input";
+updateCountsUI();
+setBanner("neutral", "No validation run yet.");
