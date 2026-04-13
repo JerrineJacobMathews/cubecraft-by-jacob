@@ -480,6 +480,59 @@ ul {
 .swatch-d { background: var(--cube-d); }
 .swatch-l { background: var(--cube-l); }
 .swatch-b { background: var(--cube-b); }
+.swatch-x { background: var(--cube-empty); }
+
+.validation-banner {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  font-weight: 600;
+}
+
+.validation-neutral {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+}
+
+.validation-success {
+  background: rgba(99, 213, 154, 0.10);
+  border-color: rgba(99, 213, 154, 0.30);
+  color: #bff7d4;
+}
+
+.validation-warning {
+  background: rgba(255, 209, 102, 0.10);
+  border-color: rgba(255, 209, 102, 0.30);
+  color: #ffe7a3;
+}
+
+.validation-danger {
+  background: rgba(255, 123, 123, 0.10);
+  border-color: rgba(255, 123, 123, 0.30);
+  color: #ffc0c0;
+}
+
+.paint-help-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.paint-help-card {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.paint-help-label {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
 
 .cube-net {
   display: grid;
@@ -538,6 +591,29 @@ ul {
 .sticker-L { background: var(--cube-l); }
 .sticker-B { background: var(--cube-b); }
 .sticker-X { background: var(--cube-empty); }
+
+.counts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 16px 0 18px;
+}
+
+.count-chip {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.03);
+  font-weight: 700;
+}
+
+.count-u { color: #f5f7fa; }
+.count-r { color: #ff8e8e; }
+.count-f { color: #85f3ae; }
+.count-d { color: #ffe27f; }
+.count-l { color: #ffc58c; }
+.count-b { color: #8dc6ff; }
+.count-x { color: var(--muted); }
 
 .info-grid {
   display: grid;
@@ -621,7 +697,9 @@ ul {
 
 @media (max-width: 980px) {
   .info-grid,
-  .status-row {
+  .status-row,
+  .paint-help-row,
+  .counts-grid {
     grid-template-columns: 1fr;
   }
 
