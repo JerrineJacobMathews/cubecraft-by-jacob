@@ -1,115 +1,175 @@
 import { TwistyPlayer } from "https://cdn.cubing.net/v0/js/cubing/twisty";
 import { randomScrambleForEvent } from "https://cdn.cubing.net/v0/js/cubing/scramble";
 
+const Cube = window.Cube;
+
 const cubeMount = document.getElementById("cubeMount");
-const sequenceBox = document.getElementById("sequenceBox");
+const scrambleBox = document.getElementById("scrambleBox");
+const solutionBox = document.getElementById("solutionBox");
+const solverStatus = document.getElementById("solverStatus");
 const playerStatus = document.getElementById("playerStatus");
 const footerMessage = document.getElementById("footerMessage");
 
 const scrambleBtn = document.getElementById("scrambleBtn");
-const demoAlgBtn = document.getElementById("demoAlgBtn");
+const solveBtn = document.getElementById("solveBtn");
 const resetBtn = document.getElementById("resetBtn");
 const jumpToSolverBtn = document.getElementById("jumpToSolverBtn");
 const demoFlowBtn = document.getElementById("demoFlowBtn");
 
-const defaultAlg = "R U R' U'";
-const demoAlg = "R U R' U R U2 R'";
-
-let currentSequence = defaultAlg;
+let currentScramble = "";
+let currentSolution = "";
+let solverInitialized = false;
+let currentCube = null;
 
 const player = new TwistyPlayer({
   puzzle: "3x3x3",
-  alg: defaultAlg,
+  alg: "",
   hintFacelets: "floating",
   background: "none",
   controlPanel: "bottom-row",
   backView: "none",
-  experimentalSetupAnchor: "start"
+  experimentalSetupAnchor: "end"
 });
 
 cubeMount.appendChild(player);
 
-function updateSequenceDisplay(sequence, label) {
-  currentSequence = sequence && sequence.trim().length > 0 ? sequence : "(solved)";
-  sequenceBox.textContent = currentSequence;
-  if (label) {
-    playerStatus.textContent = label;
-    footerMessage.textContent = label;
-  }
+function setStatus(message) {
+  playerStatus.textContent = message;
+  footerMessage.textContent = message;
 }
 
 function scrollToSolver() {
   document.getElementById("solver")?.scrollIntoView({ behavior: "smooth" });
 }
 
-async function loadRandomScramble() {
-  try {
-    updateSequenceDisplay(currentSequence, "Generating random scramble...");
-    const scramble = await randomScrambleForEvent("333");
-    const scrambleText = scramble.toString();
+function setSolvedView() {
+  player.experimentalSetupAlg = "";
+  player.experimentalSetupAnchor = "end";
+  player.alg = "";
+}
 
-    player.alg = scrambleText;
-    updateSequenceDisplay(
-      scrambleText,
-      "Random 3×3 scramble loaded into the viewer."
-    );
+function setScrambleView(scramble) {
+  player.experimentalSetupAlg = "";
+  player.experimentalSetupAnchor = "start";
+  player.alg = scramble;
+}
+
+function setSolutionPlayback(scramble, solution) {
+  player.experimentalSetupAlg = scramble;
+  player.experimentalSetupAnchor = "end";
+  player.alg = solution;
+}
+
+function resetAll() {
+  currentScramble = "";
+  currentSolution = "";
+  currentCube = null;
+
+  scrambleBox.textContent = "No scramble loaded yet.";
+  solutionBox.textContent = "No solution yet.";
+  setSolvedView();
+  setStatus("Cube reset to solved state.");
+}
+
+async function ensureSolverReady() {
+  if (!Cube) {
+    throw new Error("cube.js library did not load.");
+  }
+
+  if (solverInitialized) {
+    return;
+  }
+
+  solverStatus.textContent = "Initializing...";
+  setStatus("Initializing solver tables. This may take a few seconds on first use...");
+
+  await new Promise((resolve) => {
+    setTimeout(() => {
+      Cube.initSolver();
+      solverInitialized = true;
+      resolve();
+    }, 30);
+  });
+
+  solverStatus.textContent = "Ready";
+  setStatus("Solver initialized and ready.");
+}
+
+async function generateScramble() {
+  scrollToSolver();
+
+  try {
+    setStatus("Generating random 3×3 scramble...");
+    const scramble = await randomScrambleForEvent("333");
+    const scrambleText = scramble.toString().trim();
+
+    currentScramble = scrambleText;
+    currentSolution = "";
+    currentCube = new Cube();
+    currentCube.move(scrambleText);
+
+    scrambleBox.textContent = scrambleText;
+    solutionBox.textContent = "No solution yet.";
+    setScrambleView(scrambleText);
+    setStatus("Random scramble loaded. Press Solve to compute the solution.");
   } catch (error) {
     console.error(error);
-    updateSequenceDisplay(
-      currentSequence,
-      "Could not generate scramble. Check browser support or network access."
-    );
+    setStatus("Could not generate scramble.");
   }
 }
 
-function loadDemoAlg() {
-  player.alg = demoAlg;
-  updateSequenceDisplay(
-    demoAlg,
-    "Demo algorithm loaded."
-  );
+async function solveCurrentScramble() {
+  scrollToSolver();
+
+  if (!currentCube || !currentScramble) {
+    setStatus("Generate a scramble first.");
+    return;
+  }
+
+  try {
+    await ensureSolverReady();
+
+    solverStatus.textContent = "Solving...";
+    setStatus("Computing solution...");
+
+    const cubeToSolve = new Cube(currentCube);
+    const solution = cubeToSolve.solve();
+
+    currentSolution = solution;
+    solutionBox.textContent = solution;
+    setSolutionPlayback(currentScramble, solution);
+
+    solverStatus.textContent = "Solved";
+    setStatus("Solution computed and loaded into animated playback.");
+  } catch (error) {
+    console.error(error);
+    solverStatus.textContent = "Error";
+    setStatus("Could not solve the current scramble.");
+  }
 }
 
-function resetCube() {
-  player.alg = "";
-  updateSequenceDisplay(
-    "(solved)",
-    "Cube reset to solved state."
-  );
-}
-
-scrambleBtn?.addEventListener("click", async () => {
-  scrollToSolver();
-  await loadRandomScramble();
-});
-
-demoAlgBtn?.addEventListener("click", () => {
-  scrollToSolver();
-  loadDemoAlg();
-});
-
-resetBtn?.addEventListener("click", () => {
-  scrollToSolver();
-  resetCube();
-});
+scrambleBtn?.addEventListener("click", generateScramble);
+solveBtn?.addEventListener("click", solveCurrentScramble);
+resetBtn?.addEventListener("click", resetAll);
 
 jumpToSolverBtn?.addEventListener("click", () => {
   scrollToSolver();
-  updateSequenceDisplay(currentSequence, "Solver workspace opened.");
+  setStatus("Solver workspace opened.");
 });
 
 demoFlowBtn?.addEventListener("click", () => {
   scrollToSolver();
-  loadDemoAlg();
   alert(
     "CubeCraft by Jacob\n\n" +
-    "Step 2 is now live:\n" +
-    "• real 3D cube viewer\n" +
-    "• random scramble button\n" +
-    "• demo algorithm loading\n" +
-    "• reset to solved state\n\n" +
-    "Next: connect actual solving logic and face input."
+    "Step 3 is now live:\n" +
+    "• generate random scramble\n" +
+    "• initialize real solver\n" +
+    "• compute solution sequence\n" +
+    "• animate solve playback\n\n" +
+    "Next: manual face input and validation."
   );
+  setStatus("How-it-works dialog opened.");
 });
 
-updateSequenceDisplay(defaultAlg, "Interactive cube ready.");
+solverStatus.textContent = "Not initialized";
+resetAll();
